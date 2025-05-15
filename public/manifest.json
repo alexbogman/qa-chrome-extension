@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "QA Tools",
+  "version": "1.0",
+  "description": "Tools to make easy job for QA engineers",
+  "author": "Canid QA Team",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "action": {
+    "default_title": "Canid - QA Tools",
+    "default_popup": "popup.html"
+  }
+}
