@@ -19,15 +19,32 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "http://localhost:3000/*",
+        "https://app-staging.canid.io/*",
+        "https://app.canid.io/*"
       ],
       "js": [
-        "content.js"
-      ]
+        "./contents/content_canid.js"
+      ],
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://athenanet.athenahealth.com/*"
+      ],
+      "js": [
+        "./contents/content_athena.js"
+      ],
+      "all_frames": false
     }
   ],
   "action": {
     "default_title": "Canid - QA Tools",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon-16.png",
+      "48": "icon-48.png"
+    }
   }
+
 }

@@ -63,10 +63,9 @@ export default class DataAutomationId {
         });
     }
     
-    // Función para eliminar los resaltados
     removeHighlights() {
         const popups = document.querySelectorAll('.qa-popup-container');
         popups.forEach((popup) => popup.remove());
-        this.processedElements = new WeakSet(); // Limpia el registro de elementos procesados
+        this.processedElements = new WeakSet();
     }
 }
