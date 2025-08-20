@@ -21,7 +21,10 @@
       "matches": [
         "http://localhost:3000/*",
         "https://app-staging.canid.io/*",
-        "https://app.canid.io/*"
+        "https://app.canid.io/*",
+        "http://localhost:3001/*",
+        "https://internal-tools-staging.canid.io/*",
+        "https://internal-tools.canid.io/*"
       ],
       "js": [
         "./contents/content_canid.js"
@@ -43,7 +46,8 @@
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icon-16.png",
-      "48": "icon-48.png"
+      "48": "icon-48.png",
+      "128": "icon-128.png"
     }
   }
 

@@ -2,8 +2,81 @@ import { faker } from "@faker-js/faker";
 import { addMonths, format, parse } from "date-fns";
 import { selectDropdownValue, setValue, simulateTyping } from "../dom-utils";
 import { VaccineScheduleInMonths } from "../../shared/vaccine-data";
+import {
+  PP_URL_LOCAL,
+  PP_URL_PROD,
+  PP_URL_STAGING,
+  IT_URL_LOCAL,
+  IT_URL_PROD,
+  IT_URL_STAGING,
+} from "../const/canid";
 
 export class Canid {
+  insertEnvAlert(envUrl: string) {
+    if (envUrl.includes(PP_URL_LOCAL) || envUrl.includes(IT_URL_LOCAL)) {
+      const alert = document.createElement("div");
+      alert.style.position = "fixed";
+      alert.style.left = "0";
+      alert.style.right = "0";
+      alert.style.bottom = "20px"
+      alert.style.zIndex = "9999";
+      alert.style.width = "fit-content";
+      alert.style.margin = "0 auto";
+      alert.style.fontSize = "0.9rem";
+      alert.style.fontWeight = "600";
+      alert.style.textAlign = "center";
+      alert.style.textShadow = "rgba(0, 0, 0, 0.2) 1px 1px";
+      alert.style.padding = "0.8rem";
+      alert.style.borderRadius = "0.5rem";
+      alert.style.color = "white";
+      alert.style.backgroundColor = "#45b39d";
+      alert.textContent = "Chill: You are testing local environment.";
+      document.body.insertAdjacentElement("afterbegin", alert);
+    } else if (
+      envUrl.includes(PP_URL_STAGING) ||
+      envUrl.includes(IT_URL_STAGING)
+    ) {
+      const alert = document.createElement("div");
+      alert.style.position = "fixed";
+      alert.style.left = "0";
+      alert.style.right = "0";
+      alert.style.bottom = "20px"
+      alert.style.zIndex = "9999";
+      alert.style.width = "fit-content";
+      alert.style.margin = "0px auto";
+      alert.style.fontSize = "0.9rem";
+      alert.style.fontWeight = "600";
+      alert.style.textAlign = "center";
+      alert.style.textShadow = "rgba(0, 0, 0, 0.2) 1px 1px";
+      alert.style.padding = "0.8rem";
+      alert.style.borderRadius = "0.5rem";
+      alert.style.color = "white";
+      alert.style.backgroundColor = "#f1c40f";
+      alert.textContent = "Chill, but not too much: You are testing staging environment.";
+      document.body.insertAdjacentElement("afterbegin", alert);
+
+    } else if (envUrl.includes(PP_URL_PROD) || envUrl.includes(IT_URL_PROD)) {
+      const alert = document.createElement("div");
+      alert.style.position = "fixed";
+      alert.style.left = "0";
+      alert.style.right = "0";
+      alert.style.bottom = "20px"
+      alert.style.zIndex = "9999";
+      alert.style.width = "fit-content";
+      alert.style.margin = "0 auto";
+      alert.style.fontSize = "0.9rem";
+      alert.style.fontWeight = "600";
+      alert.style.textAlign = "center";
+      alert.style.textShadow = "rgba(0, 0, 0, 0.2) 1px 1px";
+      alert.style.padding = "0.8rem";
+      alert.style.borderRadius = "0.5rem";
+      alert.style.color = "white";
+      alert.style.backgroundColor = "#e74c3c";
+      alert.textContent = "Danger: You are in a production environment, be careful or face the consequences.";
+      document.body.insertAdjacentElement("afterbegin", alert);
+    }
+  }
+
   async getPatientInfo() {
     console.log("Fetching patient info...");
     const patientInfoBtn: HTMLElement | null = document.querySelector(
@@ -191,7 +264,8 @@ export class Canid {
     );
 
     const saveBtn: HTMLButtonElement | null = document.querySelector(
-      "body > div:nth-child(3) > div > div.scrolling.content > form > button"
+      //"body > div:nth-child(5) > div > div.scrolling.content > form > button"
+      "body > div.modals:last-child > div > div.scrolling.content > form > button"
     );
 
     saveBtn?.click();
