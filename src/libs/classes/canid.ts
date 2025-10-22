@@ -309,4 +309,9 @@ export class Canid {
   // const ageInMonths = 2; // edad actual
   // const result = getDoseDueDate(VaccineTypes.DTaP, "dose_1", birthDate, ageInMonths);
   // result: { date: "03/01/2025", due: true }
+
+  showInputScan() {
+    const input = document.querySelector('[data-automation-id="test-value"]') as HTMLInputElement;
+    input.setAttribute('style', '');
+  }
 }

@@ -3,8 +3,7 @@ import { Canid } from "../libs/classes/canid";
 
 let isHighlightingEnabled = false;
 const dataAutomationId = new DataAutomationId();
-
-
+const canid = new Canid();
 
 function onReady(callback: () => void) {
   if (document.readyState === "complete" || document.readyState === "interactive") {
@@ -15,7 +14,6 @@ function onReady(callback: () => void) {
 }
 
 onReady(() => {
-  const canid = new Canid();
   canid.insertEnvAlert(window.location.href);
 
   chrome.runtime.onMessage.addListener(async (message, _sender, sendResponse) => {
@@ -72,6 +70,7 @@ onReady(() => {
 
 let observerTimeout: any;
 const observer = new MutationObserver(() => {
+  canid.showInputScan();
   if (isHighlightingEnabled) {
     clearTimeout(observerTimeout);
     observerTimeout = setTimeout(() => {
