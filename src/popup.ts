@@ -3,19 +3,14 @@ const randomPatientDataBtn = document.getElementById("randomPatientDataBtn");
 const addHistoricImmunizationsBtn = document.getElementById(
   "addHistoricImmunizationsBtn"
 );
-const getPatientInfoBtn = document.getElementById("getPatientInfo");
+const getPatientDemographicBtn = document.getElementById(
+  "getPatientDemographic"
+);
+const getInsuranceBtn = document.getElementById("getInsurance");
+const getImmunizationsBtn = document.getElementById("getImmunizations");
 
 let highlightEnabled: boolean = false;
-function copyToClipboard(text: string) {
-  const tempInput = document.createElement("input");
-  tempInput.style.position = "fixed";
-  tempInput.style.opacity = "0";
-  tempInput.value = text;
-  document.body.appendChild(tempInput);
-  tempInput.select();
-  document.execCommand("copy");
-  document.body.removeChild(tempInput);
-}
+
 function updateHighlightButton() {
   if (highlightBtn) {
     highlightBtn.textContent = highlightEnabled ? "Disable" : "Enable";
@@ -26,28 +21,6 @@ chrome.storage.local.get("isHighlightingEnabled", (result) => {
   highlightEnabled = result.isHighlightingEnabled ?? false;
   updateHighlightButton();
 });
-
-if (getPatientInfoBtn) {
-  getPatientInfoBtn.addEventListener("click", () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0]?.id;
-      if (typeof tabId === "number") {
-        chrome.tabs.sendMessage(
-          tabId,
-          { action: "getPatientInfo" },
-          (response) => {
-            console.log("Response from content script:", response);
-            if (response?.data) {
-              console.log("Patient info received:", response.data);
-              copyToClipboard(response.data);
-            }
-          }
-        );
-      }
-    });
-  });
-}
-
 
 if (highlightBtn) {
   highlightBtn.addEventListener("click", () => {
@@ -87,6 +60,66 @@ if (addHistoricImmunizationsBtn) {
       const tabId = tabs[0]?.id;
       if (typeof tabId === "number") {
         chrome.tabs.sendMessage(tabId, { action: "addHistoricImmunizations" });
+      }
+    });
+  });
+}
+
+if (getPatientDemographicBtn) {
+  getPatientDemographicBtn.addEventListener("click", () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tabId = tabs[0]?.id;
+      if (typeof tabId === "number") {
+        chrome.tabs.sendMessage(
+          tabId,
+          { action: "getPatientDemographic" },
+          (response) => {
+            console.log("Response from content script:", response);
+            if (response?.data) {
+              console.log("Patient demographic received:", response.data);
+            }
+          }
+        );
+      }
+    });
+  });
+}
+
+if (getInsuranceBtn) {
+  getInsuranceBtn.addEventListener("click", () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tabId = tabs[0]?.id;
+      if (typeof tabId === "number") {
+        chrome.tabs.sendMessage(
+          tabId,
+          { action: "getInsurance" },
+          (response) => {
+            console.log("Response from content script:", response);
+            if (response?.data) {
+              console.log("Insurance received:", response.data);
+            }
+          }
+        );
+      }
+    });
+  });
+}
+
+if (getImmunizationsBtn) {
+  getImmunizationsBtn.addEventListener("click", () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tabId = tabs[0]?.id;
+      if (typeof tabId === "number") {
+        chrome.tabs.sendMessage(
+          tabId,
+          { action: "getImmunizations" },
+          (response) => {
+            console.log("Response from content script:", response);
+            if (response?.data) {
+              console.log("Immunizations received:", response.data);
+            }
+          }
+        );
       }
     });
   });

@@ -1,0 +1,42 @@
+
+> qa-chrome-extension-v2@0.0.0 build C:\Repositories\qa-chrome
+> tsc && vite build
+
+[36mvite v6.3.5 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 2 modules transformed.
+Γ£ù Build failed in 151ms
+
+Building content scripts separately...
+  Building content script: content_canid
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+  Building content script: content_athena
+  Building content script: content_develo
+  Building content script: content_ecw
+Generated an empty chunk: "ecw.content".
+  Building content script: content_tebra
+Generated an empty chunk: "tebra.content".
+  Building content script: content_practice_fusion
+Generated an empty chunk: "practice-fusion.content".
+  Building content script: content_next_gen
+Generated an empty chunk: "next-gen.content".
+  Building content script: content_drchrono
+Generated an empty chunk: "drchrono.content".
+Finished building content scripts.
+error during build:
+Invalid value for option "output.inlineDynamicImports" - multiple inputs are not supported when "output.inlineDynamicImports" is true.
+    at getRollupError (file:///C:/Repositories/qa-chrome/node_modules/.pnpm/rollup@4.46.4/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///C:/Repositories/qa-chrome/node_modules/.pnpm/rollup@4.46.4/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at getInlineDynamicImports (file:///C:/Repositories/qa-chrome/node_modules/.pnpm/rollup@4.46.4/node_modules/rollup/dist/es/shared/node-entry.js:23048:16)
+    at normalizeOutputOptions (file:///C:/Repositories/qa-chrome/node_modules/.pnpm/rollup@4.46.4/node_modules/rollup/dist/es/shared/node-entry.js:22937:34)
+    at getOutputOptions (file:///C:/Repositories/qa-chrome/node_modules/.pnpm/rollup@4.46.4/node_modules/rollup/dist/es/shared/node-entry.js:23358:12)
+    at getOutputOptionsAndPluginDriver (file:///C:/Repositories/qa-chrome/node_modules/.pnpm/rollup@4.46.4/node_modules/rollup/dist/es/shared/node-entry.js:23353:19)
+    at async handleGenerateWrite (file:///C:/Repositories/qa-chrome/node_modules/.pnpm/rollup@4.46.4/node_modules/rollup/dist/es/shared/node-entry.js:23329:74)
+    at async buildEnvironment (file:///C:/Repositories/qa-chrome/node_modules/.pnpm/vite@6.3.5/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:46212:16)
+    at async Object.defaultBuildApp [as buildApp] (file:///C:/Repositories/qa-chrome/node_modules/.pnpm/vite@6.3.5/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:46684:5)
+    at async CAC.<anonymous> (file:///C:/Repositories/qa-chrome/node_modules/.pnpm/vite@6.3.5/node_modules/vite/dist/node/cli.js:863:7)
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

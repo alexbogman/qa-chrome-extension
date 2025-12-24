@@ -1,4 +1,4 @@
-import { faker } from "@faker-js/faker";
+import { faker } from "@faker-js/faker/locale/en";
 import { addMonths, format, parse } from "date-fns";
 import { selectDropdownValue, setValue, simulateTyping } from "../dom-utils";
 import { VaccineScheduleInMonths } from "../../shared/vaccine-data";
@@ -18,7 +18,7 @@ export class Canid {
       alert.style.position = "fixed";
       alert.style.left = "0";
       alert.style.right = "0";
-      alert.style.bottom = "20px"
+      alert.style.bottom = "20px";
       alert.style.zIndex = "9999";
       alert.style.width = "fit-content";
       alert.style.margin = "0 auto";
@@ -40,7 +40,7 @@ export class Canid {
       alert.style.position = "fixed";
       alert.style.left = "0";
       alert.style.right = "0";
-      alert.style.bottom = "20px"
+      alert.style.bottom = "20px";
       alert.style.zIndex = "9999";
       alert.style.width = "fit-content";
       alert.style.margin = "0px auto";
@@ -52,15 +52,15 @@ export class Canid {
       alert.style.borderRadius = "0.5rem";
       alert.style.color = "white";
       alert.style.backgroundColor = "#f1c40f";
-      alert.textContent = "Chill, but not too much: You are testing staging environment.";
+      alert.textContent =
+        "Chill, but not too much: You are testing staging environment.";
       document.body.insertAdjacentElement("afterbegin", alert);
-
     } else if (envUrl.includes(PP_URL_PROD) || envUrl.includes(IT_URL_PROD)) {
       const alert = document.createElement("div");
       alert.style.position = "fixed";
       alert.style.left = "0";
       alert.style.right = "0";
-      alert.style.bottom = "20px"
+      alert.style.bottom = "20px";
       alert.style.zIndex = "9999";
       alert.style.width = "fit-content";
       alert.style.margin = "0 auto";
@@ -72,7 +72,8 @@ export class Canid {
       alert.style.borderRadius = "0.5rem";
       alert.style.color = "white";
       alert.style.backgroundColor = "#e74c3c";
-      alert.textContent = "Danger: You are in a production environment, be careful or face the consequences.";
+      alert.textContent =
+        "Danger: You are in a production environment, be careful or face the consequences.";
       document.body.insertAdjacentElement("afterbegin", alert);
     }
   }
@@ -311,7 +312,9 @@ export class Canid {
   // result: { date: "03/01/2025", due: true }
 
   showInputScan() {
-    const input = document.querySelector('[data-automation-id="test-value"]') as HTMLInputElement;
-    input.setAttribute('style', '');
+    const input = document.querySelector(
+      '[data-automation-id="test-value"]'
+    ) as HTMLInputElement;
+    input.setAttribute("style", "");
   }
 }

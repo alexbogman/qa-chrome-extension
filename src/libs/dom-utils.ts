@@ -195,3 +195,14 @@ export async function simulateTyping(selector: string, value: string) {
     );
   }
 }
+
+export function onReady(callback: () => void) {
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    callback();
+  } else {
+    document.addEventListener("DOMContentLoaded", callback, { once: true });
+  }
+}

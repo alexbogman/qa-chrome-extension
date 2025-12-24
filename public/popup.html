@@ -19,31 +19,23 @@
     </header>
     <main>
         <section>
-            <div class="settings section">
-                <span>Settings</span>
-                <small>Highlight Data Automation Id's</small>
-                <button id="highlightBtn">Enable</button>
+            <div class="tools">
+                <button id="highlightBtn">Highlight Data Automation Id's</button>
+                <button id="randomPatientDataBtn">Canid - Random Patient Data</button>
+                <button id="addHistoricImmunizationsBtn">Canid - Add Historic Immunizations</button>
+                <button id="getPatientDemographic">Get Patient Demographics</button>
+                <button id="getInsurance">Get Insurance</button>
+                <button id="getImmunizations">Get Immunizations</button>
             </div>
-            <div class="actions section">
-                <span>Actions</span>
-                <small>Get Patient Info</small>
-                <button id="getPatientInfo">Get</button>
-            </div>
-            <div class="actions section">
-                <span>Actions</span>
-                <small>Random Patient Data</small>
-                <button id="randomPatientDataBtn">Generate</button>
-            </div>
-            <div class="actions section">
-                <span>Actions</span>
-                <small>Add Historic Immunizations</small>
-                <button id="addHistoricImmunizationsBtn">Add</button>
-            </div>
-
+        </section>
+        <section>
+            <div id="patientDemographics"></div>
+            <div id="insurance"></div>
+            <div id="immunizations"></div>
         </section>
     </main>
     <footer>
-        <p>This tool was created to facilitate QA work</p>
+        <p align="center">This tool was created to facilitate QA work</p>
     </footer>
     <script type="module" src="popup.js"></script>
 </body>
