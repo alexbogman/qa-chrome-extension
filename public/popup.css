@@ -9,7 +9,7 @@
 
 body {
     width: 420px;
-    height: 600px;
+    height: auto;
     background-color: #FFFFFF;
     outline: 1px solid #16324F;
     outline-offset: 1px;

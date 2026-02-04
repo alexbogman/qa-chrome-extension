@@ -30,24 +30,6 @@
         "./contents/content_canid.js"
       ],
       "all_frames": false
-    },
-    {
-      "matches": [
-        "https://athenanet.athenahealth.com/*"
-      ],
-      "js": [
-        "./contents/content_athena.js"
-      ],
-      "all_frames": false
-    },
-    {
-      "matches": [
-        "https://*.letsdevelo.com/*"
-      ],
-      "js": [
-        "./contents/content_develo.js"
-      ],
-      "all_frames": false
     }
   ],
   "action": {

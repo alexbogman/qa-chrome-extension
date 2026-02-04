@@ -9,7 +9,7 @@ import {
   IT_URL_LOCAL,
   IT_URL_PROD,
   IT_URL_STAGING,
-} from "../const/canid";
+} from "../constants/canid";
 
 export class Canid {
   insertEnvAlert(envUrl: string) {
@@ -18,7 +18,7 @@ export class Canid {
       alert.style.position = "fixed";
       alert.style.left = "0";
       alert.style.right = "0";
-      alert.style.bottom = "20px";
+      alert.style.bottom = "10px";
       alert.style.zIndex = "9999";
       alert.style.width = "fit-content";
       alert.style.margin = "0 auto";
@@ -40,7 +40,7 @@ export class Canid {
       alert.style.position = "fixed";
       alert.style.left = "0";
       alert.style.right = "0";
-      alert.style.bottom = "20px";
+      alert.style.bottom = "10px";
       alert.style.zIndex = "9999";
       alert.style.width = "fit-content";
       alert.style.margin = "0px auto";
@@ -60,7 +60,7 @@ export class Canid {
       alert.style.position = "fixed";
       alert.style.left = "0";
       alert.style.right = "0";
-      alert.style.bottom = "20px";
+      alert.style.bottom = "10px";
       alert.style.zIndex = "9999";
       alert.style.width = "fit-content";
       alert.style.margin = "0 auto";

@@ -4,13 +4,6 @@ import { resolve } from 'path';
 
 const contentScripts = {
   content_canid: resolve(__dirname, 'src/contents/canid.content.ts'),
-  content_athena: resolve(__dirname, 'src/contents/athena.content.ts'),
-  content_develo: resolve(__dirname, 'src/contents/develo.content.ts'),
-  content_ecw: resolve(__dirname, 'src/contents/ecw.content.ts'),
-  content_tebra: resolve(__dirname, 'src/contents/tebra.content.ts'),
-  content_practice_fusion: resolve(__dirname, 'src/contents/practice-fusion.content.ts'),
-  content_next_gen: resolve(__dirname, 'src/contents/next-gen.content.ts'),
-  content_drchrono: resolve(__dirname, 'src/contents/drchrono.content.ts'),
 };
 
 const otherEntries = {
