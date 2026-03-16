@@ -1,25 +1,23 @@
 const highlightBtn = document.getElementById("highlightBtn");
 const randomPatientDataBtn = document.getElementById("randomPatientDataBtn");
 const addHistoricImmunizationsBtn = document.getElementById(
-  "addHistoricImmunizationsBtn"
+  "addHistoricImmunizationsBtn",
 );
-const getPatientDemographicBtn = document.getElementById(
-  "getPatientDemographic"
-);
-const getInsuranceBtn = document.getElementById("getInsurance");
-const getImmunizationsBtn = document.getElementById("getImmunizations");
-
 let highlightEnabled: boolean = false;
-
-function updateHighlightButton() {
-  if (highlightBtn) {
-    highlightBtn.textContent = highlightEnabled ? "Disable" : "Enable";
-  }
-}
 
 chrome.storage.local.get("isHighlightingEnabled", (result) => {
   highlightEnabled = result.isHighlightingEnabled ?? false;
   updateHighlightButton();
+});
+
+chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  const tabId = tabs[0]?.id;
+  if (typeof tabId === "number") {
+    chrome.tabs.sendMessage(tabId, {
+      action: "toggleHighlight",
+      enabled: highlightEnabled,
+    });
+  }
 });
 
 if (highlightBtn) {
@@ -65,62 +63,10 @@ if (addHistoricImmunizationsBtn) {
   });
 }
 
-if (getPatientDemographicBtn) {
-  getPatientDemographicBtn.addEventListener("click", () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0]?.id;
-      if (typeof tabId === "number") {
-        chrome.tabs.sendMessage(
-          tabId,
-          { action: "getPatientDemographic" },
-          (response) => {
-            console.log("Response from content script:", response);
-            if (response?.data) {
-              console.log("Patient demographic received:", response.data);
-            }
-          }
-        );
-      }
-    });
-  });
-}
-
-if (getInsuranceBtn) {
-  getInsuranceBtn.addEventListener("click", () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0]?.id;
-      if (typeof tabId === "number") {
-        chrome.tabs.sendMessage(
-          tabId,
-          { action: "getInsurance" },
-          (response) => {
-            console.log("Response from content script:", response);
-            if (response?.data) {
-              console.log("Insurance received:", response.data);
-            }
-          }
-        );
-      }
-    });
-  });
-}
-
-if (getImmunizationsBtn) {
-  getImmunizationsBtn.addEventListener("click", () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0]?.id;
-      if (typeof tabId === "number") {
-        chrome.tabs.sendMessage(
-          tabId,
-          { action: "getImmunizations" },
-          (response) => {
-            console.log("Response from content script:", response);
-            if (response?.data) {
-              console.log("Immunizations received:", response.data);
-            }
-          }
-        );
-      }
-    });
-  });
+function updateHighlightButton() {
+  if (highlightBtn) {
+    highlightBtn.textContent = highlightEnabled
+      ? `Highlight elements with data-automation-id (OFF)`
+      : `Highlight elements with data-automation-id (ON)`;
+  }
 }

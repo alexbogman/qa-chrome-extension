@@ -12,143 +12,60 @@ import {
 } from "../constants/canid";
 
 export class Canid {
+  private createAlertElement(text: string, bgColor: string) {
+    const alert = document.createElement("div");
+    Object.assign(alert.style, {
+      position: "fixed",
+      left: "50%",
+      transform: "translate(-50%, 20px)",
+      bottom: "20px",
+      zIndex: "9999",
+      width: "fit-content",
+      fontSize: "0.95rem",
+      fontWeight: "600",
+      textAlign: "center",
+      textShadow: "rgba(0, 0, 0, 0.2) 1px 1px",
+      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+      padding: "0.8rem 1.5rem",
+      borderRadius: "0.5rem",
+      color: "white",
+      backgroundColor: bgColor,
+      cursor: "pointer",
+      opacity: "0",
+      transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)", // Smooth bounce effect
+      fontFamily: "system-ui, -apple-system, sans-serif",
+    });
+    
+    alert.textContent = text;
+    alert.title = "Click to dismiss";
+
+    // Dismiss on click
+    alert.addEventListener("click", () => {
+      alert.style.opacity = "0";
+      alert.style.transform = "translate(-50%, 20px)";
+      setTimeout(() => alert.remove(), 400);
+    });
+
+    document.body.insertAdjacentElement("beforeend", alert);
+
+    // Trigger animation slightly after appending
+    setTimeout(() => {
+      alert.style.opacity = "1";
+      alert.style.transform = "translate(-50%, 0)";
+    }, 50);
+  }
+
   insertEnvAlert(envUrl: string) {
     if (envUrl.includes(PP_URL_LOCAL) || envUrl.includes(IT_URL_LOCAL)) {
-      const alert = document.createElement("div");
-      alert.style.position = "fixed";
-      alert.style.left = "0";
-      alert.style.right = "0";
-      alert.style.bottom = "10px";
-      alert.style.zIndex = "9999";
-      alert.style.width = "fit-content";
-      alert.style.margin = "0 auto";
-      alert.style.fontSize = "0.9rem";
-      alert.style.fontWeight = "600";
-      alert.style.textAlign = "center";
-      alert.style.textShadow = "rgba(0, 0, 0, 0.2) 1px 1px";
-      alert.style.padding = "0.8rem";
-      alert.style.borderRadius = "0.5rem";
-      alert.style.color = "white";
-      alert.style.backgroundColor = "#45b39d";
-      alert.textContent = "Chill: You are testing local environment.";
-      document.body.insertAdjacentElement("afterbegin", alert);
+      this.createAlertElement("Chill: You are testing local environment. 😌", "#45b39d");
     } else if (
       envUrl.includes(PP_URL_STAGING) ||
       envUrl.includes(IT_URL_STAGING)
     ) {
-      const alert = document.createElement("div");
-      alert.style.position = "fixed";
-      alert.style.left = "0";
-      alert.style.right = "0";
-      alert.style.bottom = "10px";
-      alert.style.zIndex = "9999";
-      alert.style.width = "fit-content";
-      alert.style.margin = "0px auto";
-      alert.style.fontSize = "0.9rem";
-      alert.style.fontWeight = "600";
-      alert.style.textAlign = "center";
-      alert.style.textShadow = "rgba(0, 0, 0, 0.2) 1px 1px";
-      alert.style.padding = "0.8rem";
-      alert.style.borderRadius = "0.5rem";
-      alert.style.color = "white";
-      alert.style.backgroundColor = "#f1c40f";
-      alert.textContent =
-        "Chill, but not too much: You are testing staging environment.";
-      document.body.insertAdjacentElement("afterbegin", alert);
+      this.createAlertElement("Chill, but not too much: You are testing staging environment. 🤔", "#f39c12");
     } else if (envUrl.includes(PP_URL_PROD) || envUrl.includes(IT_URL_PROD)) {
-      const alert = document.createElement("div");
-      alert.style.position = "fixed";
-      alert.style.left = "0";
-      alert.style.right = "0";
-      alert.style.bottom = "10px";
-      alert.style.zIndex = "9999";
-      alert.style.width = "fit-content";
-      alert.style.margin = "0 auto";
-      alert.style.fontSize = "0.9rem";
-      alert.style.fontWeight = "600";
-      alert.style.textAlign = "center";
-      alert.style.textShadow = "rgba(0, 0, 0, 0.2) 1px 1px";
-      alert.style.padding = "0.8rem";
-      alert.style.borderRadius = "0.5rem";
-      alert.style.color = "white";
-      alert.style.backgroundColor = "#e74c3c";
-      alert.textContent =
-        "Danger: You are in a production environment, be careful or face the consequences.";
-      document.body.insertAdjacentElement("afterbegin", alert);
+      this.createAlertElement("Danger: You are in a production environment, be careful or face the consequences! 🚨", "#e74c3c");
     }
-  }
-
-  async getPatientInfo() {
-    console.log("Fetching patient info...");
-    const patientInfoBtn: HTMLElement | null = document.querySelector(
-      '[data-automation-id="patient-profile-head"] div a:first-child'
-    );
-    const insuranceInfoBtn: HTMLElement | null = document.querySelector(
-      '[data-automation-id="patient-profile-head"] div a:nth-child(2)'
-    );
-    let insuranceName = "";
-    let memberId = "";
-    let patientInfo: any = {};
-    const getText = (selector: string): string =>
-      document.querySelector<any>(selector)?.value?.trim() || "";
-
-    if (patientInfoBtn) {
-      patientInfoBtn.click();
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Espera a que cargue el form
-      patientInfo.firstName = getText('[placeholder="First name"]');
-      patientInfo.lastName = getText('[placeholder="Last name"]');
-      patientInfo.dob = getText('[placeholder="Select date..."]');
-      patientInfo.sex =
-        document
-          .querySelector(
-            '[data-automation-id="patient-basic-sex"] div:first-child'
-          )
-          ?.textContent?.trim() || "";
-      patientInfo.email = getText('[placeholder="Email"]');
-      patientInfo.phone = getText('[placeholder="Phone number"]');
-      patientInfo.street = getText('[placeholder="Street & number"]');
-      patientInfo.city = getText('[placeholder="City"]');
-      patientInfo.state = "New York";
-      patientInfo.zip = getText('[placeholder="10010"]');
-    }
-
-    if (insuranceInfoBtn) {
-      insuranceInfoBtn.click();
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Espera a que cargue la sección
-      try {
-        const insuranceTable = document.querySelectorAll("table")[1];
-        if (insuranceTable) {
-          insuranceName =
-            insuranceTable
-              .querySelector("tbody tr:first-child td:nth-child(2)")
-              ?.textContent?.trim() || "";
-          memberId =
-            insuranceTable
-              .querySelector("tbody tr:first-child td:nth-child(3)")
-              ?.textContent?.trim() || "";
-        }
-      } catch (err) {
-        console.warn("Insurance info not found", err);
-      }
-    }
-
-    // Devuelve el string separado por comas
-    return [
-      patientInfo.firstName,
-      patientInfo.lastName,
-      patientInfo.dob,
-      memberId,
-      patientInfo.street,
-      patientInfo.city,
-      patientInfo.zip,
-      patientInfo.state,
-      //patientInfo.sex,
-      patientInfo.phone,
-      patientInfo.email,
-      insuranceName,
-    ]
-      .map((v) => `${String(v).replace(/"/g, '""')}`)
-      .join(",");
   }
 
   async fillPatientForm() {
@@ -168,43 +85,43 @@ export class Canid {
       zip: faker.location.zipCode(),
       dob: format(
         faker.date.birthdate({ min: 0, max: 18, mode: "age" }),
-        "yyyy/MM/dd"
+        "yyyy/MM/dd",
       ),
     };
 
     await setValue(
       '[data-automation-id="patient-basic-mrn"] > input',
-      data.mrn
+      data.mrn,
     );
     await setValue(
       '[data-automation-id="patient-basic-first-name"] > input',
-      data.firstName
+      data.firstName,
     );
     await setValue(
       '[data-automation-id="patient-basic-last-name"] > input',
-      data.lastName
+      data.lastName,
     );
     await simulateTyping(
       '[data-automation-id="patient-basic-date-of-birth"] > input',
-      data.dob
+      data.dob,
     );
     await setValue(
       '[data-automation-id="patient-basic-email"] > input',
-      `${data.firstName.toLowerCase()}.${data.lastName.toLowerCase()}@example.com`
+      `${data.firstName.toLowerCase()}.${data.lastName.toLowerCase()}@example.com`,
     );
     await setValue('[placeholder="Phone number"]', data.phone);
     await setValue(
       '[data-automation-id="patient-basic-street"] > input',
-      data.address
+      data.address,
     );
     await setValue(
       '[data-automation-id="patient-basic-city"] > input',
-      data.city
+      data.city,
     );
     // await setValue('[data-automation-id="patient-basic-state"] > input', data.state);
     await setValue(
       '[data-automation-id="patient-basic-zip"] > input',
-      data.zip
+      data.zip,
     );
   }
 
@@ -223,22 +140,22 @@ export class Canid {
           vaccineType,
           doseKey,
           format(birth, "MM/dd/yyyy"),
-          currentAgeInMonths
+          currentAgeInMonths,
         );
         if (doseInfo?.due) {
           // Solo si corresponde, inserta la dosis
           const inserted = await this.insertDoseToForm(
             vaccineType,
             doseKey,
-            doseInfo.date
+            doseInfo.date,
           );
           if (inserted) {
             console.log(
-              `Inserted ${vaccineType} - ${doseKey} on ${doseInfo.date}`
+              `Inserted ${vaccineType} - ${doseKey} on ${doseInfo.date}`,
             );
           } else {
             console.warn(
-              `Failed to insert ${vaccineType} - ${doseKey} on ${doseInfo.date}`
+              `Failed to insert ${vaccineType} - ${doseKey} on ${doseInfo.date}`,
             );
           }
         }
@@ -251,22 +168,22 @@ export class Canid {
     // Aquí va la lógica para manipular el DOM del formulario
     await selectDropdownValue(
       '[data-automation-id="vaccine-picker"] > input',
-      vaccineType
+      vaccineType,
     );
     await setValue(
       '[data-automation-id="historical-imm-date-given"] input',
       date,
-      true
+      true,
     );
     await setValue(
       '[data-automation-id="historical-imm-vis-date"] input[type=text]',
       date,
-      true
+      true,
     );
 
     const saveBtn: HTMLButtonElement | null = document.querySelector(
       //"body > div:nth-child(5) > div > div.scrolling.content > form > button"
-      "body > div.modals:last-child > div > div.scrolling.content > form > button"
+      "body > div.modals:last-child > div > div.scrolling.content > form > button",
     );
 
     saveBtn?.click();
@@ -287,7 +204,7 @@ export class Canid {
     vaccineType: string,
     doseKey: string,
     birthDate: string,
-    currentAgeInMonths: number
+    currentAgeInMonths: number,
   ): { date: string; due: boolean } | null {
     const schedule: any = VaccineScheduleInMonths[vaccineType];
     if (!schedule || !(doseKey in schedule)) return null;
@@ -303,18 +220,5 @@ export class Canid {
     const due = currentAgeInMonths >= doseMonth;
 
     return { date: formattedDueDate, due };
-  }
-
-  // Ejemplo de uso:
-  // const birthDate = "01/01/2025";
-  // const ageInMonths = 2; // edad actual
-  // const result = getDoseDueDate(VaccineTypes.DTaP, "dose_1", birthDate, ageInMonths);
-  // result: { date: "03/01/2025", due: true }
-
-  showInputScan() {
-    const input = document.querySelector(
-      '[data-automation-id="test-value"]'
-    ) as HTMLInputElement;
-    input.setAttribute("style", "");
   }
 }

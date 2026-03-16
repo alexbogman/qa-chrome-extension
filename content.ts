@@ -9,6 +9,13 @@ const canid = new Canid();
 onReady(() => {
   canid.insertEnvAlert(window.location.href);
 
+  chrome.storage.local.get("isHighlightingEnabled", (result) => {
+    isHighlightingEnabled = result.isHighlightingEnabled ?? false;
+    if (isHighlightingEnabled) {
+      dataAutomationId.highlight(isHighlightingEnabled);
+    }
+  });
+
   chrome.runtime.onMessage.addListener(
     async (message, _sender, sendResponse) => {
       if (message.action === "toggleHighlight") {
@@ -31,12 +38,12 @@ onReady(() => {
       if (message.action === "addHistoricImmunizations") {
         const canid = new Canid();
         const dobElement: HTMLElement | null = document.querySelector(
-          '[data-automation-id="patient-profile-head"] .ui.header > .sub.header :first-child'
+          '[data-automation-id="patient-profile-head"] .ui.header > .sub.header :first-child',
         );
 
         if (!dobElement) {
           console.error(
-            "Birthdate element not found in the patient profile header."
+            "Birthdate element not found in the patient profile header.",
           );
           sendResponse({
             success: false,
@@ -56,15 +63,7 @@ onReady(() => {
         canid.addHistoricImmunizations(birthdate);
         sendResponse({ success: true });
       }
-
-      if (message.action === "getPatientInfo") {
-        const canid = new Canid();
-        const patientInfo = await canid.getPatientInfo();
-        console.log("Patient info:", patientInfo);
-        sendResponse({ data: patientInfo });
-        return true; // Necesario para respuestas async
-      }
-    }
+    },
   );
 });
 
