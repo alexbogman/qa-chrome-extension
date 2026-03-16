@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker/locale/en";
 import { addMonths, format, parse } from "date-fns";
 import { selectDropdownValue, setValue, simulateTyping } from "../dom-utils";
-import { VaccineScheduleInMonths } from "../../shared/vaccine-data";
+import { VaccineScheduleInMonths } from "../../vaccine-data";
 import {
   PP_URL_LOCAL,
   PP_URL_PROD,

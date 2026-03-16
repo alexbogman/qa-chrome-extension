@@ -1,9 +1,6 @@
-// @ts-ignore
-import DataAutomationId from "../libs/data-automation-id?chunk=canid";
-// @ts-ignore
-import { Canid } from "../libs/classes/canid?chunk=canid";
-// @ts-ignore
-import { onReady } from "../libs/dom-utils?chunk=canid";
+import { Canid } from "./libs/classes/canid.ts";
+import DataAutomationId from "./libs/data-automation-id.ts";
+import { onReady } from "./libs/dom-utils.ts";
 
 let isHighlightingEnabled = false;
 const dataAutomationId = new DataAutomationId();

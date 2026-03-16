@@ -25,5 +25,5 @@
   },
   "include": [
     "src"
-  ]
+, "vaccine-data.ts", "content.ts", "libs", "vite-env.d.ts", "popup.ts", "background.ts"  ]
 }

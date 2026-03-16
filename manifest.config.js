@@ -1,0 +1,47 @@
+
+import { defineManifest } from '@crxjs/vite-plugin'
+
+export default defineManifest({
+  manifest_version: 3,
+  name: 'QA Tools',
+  version: '1.0',
+  description: 'Tools to make easy job for QA engineers',
+  author: 'Canid QA Team',
+  permissions: [
+    'activeTab',
+    'scripting',
+    'storage'
+  ],
+  host_permissions: [
+    '<all_urls>'
+  ],
+  background: {
+    service_worker: 'background.js',
+    type: 'module'
+  },
+  content_scripts: [
+    {
+      matches: [
+        'http://localhost:3000/*',
+        'https://app-staging.canid.io/*',
+        'https://app.canid.io/*',
+        'http://localhost:3001/*',
+        'https://internal-tools-staging.canid.io/*',
+        'https://internal-tools.canid.io/*'
+      ],
+      js: [
+        'content.ts'
+      ],
+      all_frames: false
+    }
+  ],
+  action: {
+    default_title: 'Canid - QA Tools',
+    default_popup: 'popup.html',
+    default_icon: {
+      '16': 'icon-16.png',
+      '48': 'icon-48.png',
+      '128': 'icon-128.png'
+    }
+  }
+})
