@@ -69,7 +69,6 @@ onReady(() => {
 
 let observerTimeout: any;
 const observer = new MutationObserver(() => {
-  //canid.showInputScan();
   if (isHighlightingEnabled) {
     clearTimeout(observerTimeout);
     observerTimeout = setTimeout(() => {
