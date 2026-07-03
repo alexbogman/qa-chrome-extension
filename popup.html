@@ -46,6 +46,14 @@
             <button type="button" class="btn btn--outline" id="randomPatientDataBtn">Run</button>
         </article>
 
+        <section class="copy-section">
+            <p class="copy-section__label">Last generated patient</p>
+            <p class="copy-section__preview copy-section__preview--empty" id="lastPatientPreview">No data yet — run fill patient form</p>
+            <button type="button" class="btn btn--outline btn--full" id="copyPatientDataBtn" disabled>
+                Copy JSON
+            </button>
+        </section>
+
         <article class="card card--action">
             <div class="card__content">
                 <div class="card__icon card__icon--vaccine" aria-hidden="true">💉</div>
@@ -56,6 +64,14 @@
             </div>
             <button type="button" class="btn btn--outline" id="addHistoricImmunizationsBtn">Run</button>
         </article>
+
+        <section class="copy-section">
+            <p class="copy-section__label">Last historic immunizations</p>
+            <p class="copy-section__preview copy-section__preview--empty" id="lastImmunizationsPreview">No data yet — run historic immunizations</p>
+            <button type="button" class="btn btn--outline btn--full" id="copyImmunizationsDataBtn" disabled>
+                Copy JSON
+            </button>
+        </section>
 
         <p id="status" class="status" role="status" aria-live="polite"></p>
     </main>

@@ -1,6 +1,7 @@
 import { addMonths, format, parse } from "date-fns";
 import { selectDropdownValue, setValue, simulateTyping } from "../dom-actions";
-import { generatePatientTestData } from "../patient-test-data";
+import { generatePatientTestData, type PatientTestData } from "../patient-test-data";
+import type { HistoricImmunizationsData, HistoricImmunizationDose } from "../historic-immunizations-data";
 import { VaccineScheduleInMonths } from "../../vaccine-data";
 import {
   PP_URL_LOCAL,
@@ -76,7 +77,7 @@ export class Canid {
     }
   }
 
-  async fillPatientForm() {
+  async fillPatientForm(): Promise<PatientTestData> {
     const data = generatePatientTestData();
 
     await setValue(
@@ -112,9 +113,13 @@ export class Canid {
       '[data-automation-id="patient-basic-zip"] > input',
       data.zip,
     );
+
+    return data;
   }
 
-  async addHistoricImmunizations() {
+  async addHistoricImmunizations(): Promise<
+    HistoricImmunizationsData | typeof ELEMENT_NOT_FOUND
+  > {
     const dobElement: HTMLElement | null = document.querySelector(
       '[data-automation-id="patient-profile-head"] .ui.header > .sub.header :first-child',
     );
@@ -129,10 +134,13 @@ export class Canid {
       "MM/dd/yyyy",
       new Date(),
     );
+    const patientBirthDate = format(birth, "MM/dd/yyyy");
     const now = new Date();
     const currentAgeInMonths =
       (now.getFullYear() - birth.getFullYear()) * 12 +
       (now.getMonth() - birth.getMonth());
+
+    const doses: HistoricImmunizationDose[] = [];
 
     for (const vaccineType of Object.keys(VaccineScheduleInMonths)) {
       const schedule =
@@ -143,14 +151,26 @@ export class Canid {
         const doseInfo = this.getDoseDueDate(
           vaccineType,
           doseKey,
-          format(birth, "MM/dd/yyyy"),
+          patientBirthDate,
           currentAgeInMonths,
         );
         if (doseInfo?.due) {
           await this.insertDoseToForm(vaccineType, doseKey, doseInfo.date);
+          doses.push({
+            vaccineType,
+            doseKey,
+            dateGiven: doseInfo.date,
+            visDate: doseInfo.date,
+          });
         }
       }
     }
+
+    return {
+      patientBirthDate,
+      currentAgeInMonths,
+      doses,
+    };
   }
 
   private async insertDoseToForm(

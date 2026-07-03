@@ -1,5 +1,6 @@
 import { Canid } from "./libs/classes/canid.ts";
 import { ELEMENT_NOT_FOUND } from "./libs/constants/canid.ts";
+import { LAST_PATIENT_DATA_KEY, LAST_IMMUNIZATIONS_DATA_KEY } from "./libs/constants/storage.ts";
 import DataAutomationId from "./libs/data-automation-id.ts";
 import { onReady } from "./libs/dom-actions.ts";
 
@@ -32,7 +33,10 @@ onReady(() => {
     if (message.action === "randomPatientData") {
       canid
         .fillPatientForm()
-        .then(() => sendResponse({ success: true }))
+        .then((patientData) => {
+          chrome.storage.local.set({ [LAST_PATIENT_DATA_KEY]: patientData });
+          sendResponse({ success: true, patientData });
+        })
         .catch((err) =>
           sendResponse({ success: false, error: String(err) }),
         );
@@ -45,7 +49,8 @@ onReady(() => {
           sendResponse({ success: false, error: ELEMENT_NOT_FOUND });
           return;
         }
-        sendResponse({ success: true });
+        chrome.storage.local.set({ [LAST_IMMUNIZATIONS_DATA_KEY]: res });
+        sendResponse({ success: true, immunizationsData: res });
       });
       return true;
     }

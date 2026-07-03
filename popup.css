@@ -184,6 +184,40 @@ body {
     cursor: not-allowed;
 }
 
+.btn--full {
+    width: 100%;
+}
+
+.copy-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 0.75rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    background-color: var(--muted);
+}
+
+.copy-section__label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted-foreground);
+}
+
+.copy-section__preview {
+    font-size: 0.75rem;
+    color: var(--foreground);
+    font-family: ui-monospace, monospace;
+    word-break: break-all;
+}
+
+.copy-section__preview--empty {
+    color: var(--muted-foreground);
+    font-family: inherit;
+}
+
 .switch {
     position: relative;
     display: inline-flex;

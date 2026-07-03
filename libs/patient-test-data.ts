@@ -340,3 +340,5 @@ export function generatePatientTestData() {
     dob: formatDate(randomBirthdate(18)),
   };
 }
+
+export type PatientTestData = ReturnType<typeof generatePatientTestData>;
