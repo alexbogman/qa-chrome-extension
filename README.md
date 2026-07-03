@@ -1,18 +1,35 @@
-#QA Tools - Chrome Extension
+# QA Tools – Chrome Extension
 
-Used to task automation like: 
+Chrome extension for QA engineers working on Canid's Practice Portal and Internal Tools.
 
--Get info from patients in Practice Portal (console.log)
--Complete Patient Form with fake data
--Add Immunizations History to patients
+## Features
 
+- **Highlight automation IDs** – Visual overlay on elements with `data-automation-id`
+- **Fill patient form** – Populate the patient form with random test data (Faker)
+- **Add historic immunizations** – Insert immunization history based on patient age and CDC schedule
+- **Environment alert** – Banner on page load indicating local, staging, or production
 
-##Pending features
+## Setup
 
--Athena: Count immunizations
--Registries: Count immunizations
+```bash
+pnpm install
+pnpm run build
+```
 
-##How to use the extension:
+Load the `dist` folder in `chrome://extensions/` via **Load unpacked** (Developer mode required).
 
-You need to run "pnpm run build" to generate dist folder, then you load dist folder in "chrome://extensions/"
-with the button "Load unpacked" (Developer mode must be enabled)
+For development with hot reload:
+
+```bash
+pnpm run dev
+```
+
+## Supported URLs
+
+- Practice Portal: `localhost:3000`, staging, production
+- Internal Tools: `localhost:3001`, `localhost:4000`, `localhost:4001`, staging, production
+
+## Roadmap
+
+- Athena: count immunizations
+- Registries: count immunizations

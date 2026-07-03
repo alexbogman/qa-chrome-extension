@@ -1,6 +1,7 @@
 import { Canid } from "./libs/classes/canid.ts";
+import { ELEMENT_NOT_FOUND } from "./libs/constants/canid.ts";
 import DataAutomationId from "./libs/data-automation-id.ts";
-import { onReady } from "./libs/dom-utils.ts";
+import { onReady } from "./libs/dom-actions.ts";
 
 let isHighlightingEnabled = false;
 const dataAutomationId = new DataAutomationId();
@@ -12,67 +13,53 @@ onReady(() => {
   chrome.storage.local.get("isHighlightingEnabled", (result) => {
     isHighlightingEnabled = result.isHighlightingEnabled ?? false;
     if (isHighlightingEnabled) {
-      dataAutomationId.highlight(isHighlightingEnabled);
+      dataAutomationId.highlight(true);
     }
   });
 
-  chrome.runtime.onMessage.addListener(
-    async (message, _sender, sendResponse) => {
-      if (message.action === "toggleHighlight") {
-        isHighlightingEnabled = message.enabled;
-        if (isHighlightingEnabled) {
-          dataAutomationId.highlight(isHighlightingEnabled);
-        } else {
-          dataAutomationId.removeHighlights();
-        }
-        sendResponse({ success: true });
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message.action === "toggleHighlight") {
+      isHighlightingEnabled = message.enabled;
+      if (isHighlightingEnabled) {
+        dataAutomationId.highlight(true);
+      } else {
+        dataAutomationId.removeHighlights();
       }
+      sendResponse({ success: true });
+      return false;
+    }
 
-      if (message.action === "randomPatientData") {
-        const canid = new Canid();
-        await canid.fillPatientForm();
-
-        sendResponse({ success: true });
-      }
-
-      if (message.action === "addHistoricImmunizations") {
-        const canid = new Canid();
-        const dobElement: HTMLElement | null = document.querySelector(
-          '[data-automation-id="patient-profile-head"] .ui.header > .sub.header :first-child',
+    if (message.action === "randomPatientData") {
+      canid
+        .fillPatientForm()
+        .then(() => sendResponse({ success: true }))
+        .catch((err) =>
+          sendResponse({ success: false, error: String(err) }),
         );
+      return true;
+    }
 
-        if (!dobElement) {
-          console.error(
-            "Birthdate element not found in the patient profile header.",
-          );
-          sendResponse({
-            success: false,
-            error: "Birthdate element not found",
-          });
+    if (message.action === "addHistoricImmunizations") {
+      canid.addHistoricImmunizations().then((res) => {
+        if (res === ELEMENT_NOT_FOUND) {
+          sendResponse({ success: false, error: ELEMENT_NOT_FOUND });
           return;
         }
-        // @ts-ignore
-        const birthdate: string =
-          dobElement?.textContent?.split(" / ")[0].trim() || "";
-        if (!birthdate) {
-          console.error("Birthdate not found in the patient profile header.");
-          sendResponse({ success: false, error: "Birthdate not found" });
-          return;
-        }
-
-        canid.addHistoricImmunizations(birthdate);
         sendResponse({ success: true });
-      }
-    },
-  );
+      });
+      return true;
+    }
+
+    return false;
+  });
 });
 
-let observerTimeout: any;
+let observerTimeout: ReturnType<typeof setTimeout>;
 const observer = new MutationObserver(() => {
   if (isHighlightingEnabled) {
     clearTimeout(observerTimeout);
     observerTimeout = setTimeout(() => {
-      dataAutomationId.highlight(isHighlightingEnabled);
+      dataAutomationId.highlight(true);
     }, 200);
   }
 });

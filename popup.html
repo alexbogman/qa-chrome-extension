@@ -5,30 +5,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QA Tools</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap"
-        rel="stylesheet">
     <link rel="stylesheet" href="popup.css">
 </head>
 
 <body>
-    <header>
-        <h1>QA Tools</h1>
-    </header>
-    <main>
-        <section>
-            <div class="tools">
-                <button id="highlightBtn">Highlight elements with data-automation-id</button>
-                <button id="randomPatientDataBtn">Fill Patient Form</button>
-                <button id="addHistoricImmunizationsBtn">Add Historic Immunizations</button>
+    <header class="header">
+        <div class="header__brand">
+            <span class="header__logo">QA</span>
+            <div>
+                <h1 class="header__title">QA Tools</h1>
+                <p class="header__subtitle">Canid testing utilities</p>
             </div>
-        </section>
+        </div>
+        <span class="badge">v1.0</span>
+    </header>
+
+    <main class="main">
+        <article class="card">
+            <div class="card__content">
+                <div class="card__icon card__icon--highlight" aria-hidden="true">⌖</div>
+                <div class="card__text">
+                    <h2 class="card__title">Highlight automation IDs</h2>
+                    <p class="card__description">Show borders and labels on elements with <code>data-automation-id</code></p>
+                </div>
+            </div>
+            <label class="switch" aria-label="Toggle highlight">
+                <input type="checkbox" id="highlightToggle">
+                <span class="switch__track"></span>
+            </label>
+        </article>
+
+        <article class="card card--action">
+            <div class="card__content">
+                <div class="card__icon card__icon--patient" aria-hidden="true">👤</div>
+                <div class="card__text">
+                    <h2 class="card__title">Fill patient form</h2>
+                    <p class="card__description">Populate the form with random test data</p>
+                </div>
+            </div>
+            <button type="button" class="btn btn--outline" id="randomPatientDataBtn">Run</button>
+        </article>
+
+        <article class="card card--action">
+            <div class="card__content">
+                <div class="card__icon card__icon--vaccine" aria-hidden="true">💉</div>
+                <div class="card__text">
+                    <h2 class="card__title">Historic immunizations</h2>
+                    <p class="card__description">Add doses based on patient age and schedule</p>
+                </div>
+            </div>
+            <button type="button" class="btn btn--outline" id="addHistoricImmunizationsBtn">Run</button>
+        </article>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
     </main>
-    <footer>
-        <p align="center">This tool was created to facilitate QA work</p>
+
+    <footer class="footer">
+        <p>Practice Portal &amp; Internal Tools</p>
     </footer>
+
     <script type="module" src="popup.js"></script>
 </body>
 

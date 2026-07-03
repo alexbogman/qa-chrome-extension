@@ -9,17 +9,16 @@ export async function selectDropdownValue(selector: string, value: string) {
     input.click();
     input.value = "";
 
-    // Escribe el valor completo, pero el dropdown solo buscará a partir de 3 letras
     for (let i = 0; i < value.length; i++) {
       const char = value[i];
 
       input.dispatchEvent(
         new KeyboardEvent("keydown", {
-          key: char, // La tecla presionada
-          code: `Key${char.toUpperCase()}`, // Opcional, más específico si es una letra
+          key: char,
+          code: `Key${char.toUpperCase()}`,
           bubbles: true,
           cancelable: true,
-        })
+        }),
       );
 
       input.value += char;
@@ -27,9 +26,9 @@ export async function selectDropdownValue(selector: string, value: string) {
       input.dispatchEvent(
         new InputEvent("input", {
           bubbles: true,
-          data: char, // El caracter que se insertó
-          inputType: "insertText", // Tipo de input
-        })
+          data: char,
+          inputType: "insertText",
+        }),
       );
 
       input.dispatchEvent(
@@ -37,18 +36,16 @@ export async function selectDropdownValue(selector: string, value: string) {
           key: char,
           bubbles: true,
           cancelable: true,
-        })
+        }),
       );
 
-      // 3d. Pequeño delay para simular tipeo real
       await new Promise((res) => setTimeout(res, 100));
     }
 
-    // Espera a que aparezcan las opciones y selecciona la correcta
     let match: HTMLElement | undefined;
     for (let tries = 0; tries < 20; tries++) {
       const options = Array.from(
-        document.querySelectorAll('div[role="option"].item')
+        document.querySelectorAll('div[role="option"].item'),
       );
       match = options.find((opt) => {
         const mainText = opt
@@ -58,29 +55,21 @@ export async function selectDropdownValue(selector: string, value: string) {
           .querySelector(".content")
           ?.childNodes[1]?.textContent?.trim();
         return mainText === value && labelType === value;
-      }) as HTMLElement;
+      }) as HTMLElement | undefined;
       if (match) break;
       await new Promise((res) => setTimeout(res, 200));
     }
 
     if (match) {
-      if (
-        typeof match === "object" &&
-        Array.isArray(match) &&
-        match.length > 1
-      ) {
-        match[0].click();
-      } else if (typeof match === "object" && match instanceof HTMLElement) {
-        match.click();
-      }
-      await new Promise((res) => setTimeout(res, 200)); // Espera a que se seleccione antes de avanzar
+      match.click();
+      await new Promise((res) => setTimeout(res, 200));
     } else {
       console.warn(`Dropdown option not found for value: ${value}`);
     }
   } catch (err) {
     console.error(
       `Error selecting dropdown value for selector: ${selector}`,
-      err
+      err,
     );
   }
 }
@@ -88,7 +77,7 @@ export async function selectDropdownValue(selector: string, value: string) {
 export async function setValue(
   selector: string,
   value: string,
-  pulseEnter: boolean = false
+  pulseEnter: boolean = false,
 ) {
   try {
     const el: HTMLInputElement | null = document.querySelector(selector);
@@ -98,7 +87,6 @@ export async function setValue(
       el.dispatchEvent(new Event("input", { bubbles: true }));
       el.dispatchEvent(new Event("change", { bubbles: true }));
       if (pulseEnter) {
-        //console.log(`Pulsing Enter for selector: ${selector}`);
         el.dispatchEvent(
           new KeyboardEvent("keydown", {
             key: "Enter",
@@ -107,7 +95,7 @@ export async function setValue(
             which: 13,
             bubbles: true,
             cancelable: true,
-          })
+          }),
         );
       }
       el.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
@@ -124,20 +112,19 @@ export async function simulateTyping(selector: string, value: string) {
   try {
     const el: HTMLInputElement | null = document.querySelector(selector);
     if (el) {
-      el.focus(); // 1. Asegurar el foco explícitamente. el.click() también lo haría.
-      el.value = ""; // 2. Limpiar el campo primero, como lo haces.
+      el.focus();
+      el.value = "";
 
-      // 3. Simular el tipeo de cada caracter
       for (let i = 0; i < value.length; i++) {
         const char = value[i];
 
         el.dispatchEvent(
           new KeyboardEvent("keydown", {
-            key: char, // La tecla presionada
-            code: `Key${char.toUpperCase()}`, // Opcional, más específico si es una letra
+            key: char,
+            code: `Key${char.toUpperCase()}`,
             bubbles: true,
             cancelable: true,
-          })
+          }),
         );
 
         el.value += char;
@@ -145,9 +132,9 @@ export async function simulateTyping(selector: string, value: string) {
         el.dispatchEvent(
           new InputEvent("input", {
             bubbles: true,
-            data: char, // El caracter que se insertó
-            inputType: "insertText", // Tipo de input
-          })
+            data: char,
+            inputType: "insertText",
+          }),
         );
 
         el.dispatchEvent(
@@ -155,10 +142,9 @@ export async function simulateTyping(selector: string, value: string) {
             key: char,
             bubbles: true,
             cancelable: true,
-          })
+          }),
         );
 
-        // 3d. Pequeño delay para simular tipeo real
         await new Promise((res) => setTimeout(res, 20));
       }
 
@@ -166,33 +152,20 @@ export async function simulateTyping(selector: string, value: string) {
         new KeyboardEvent("keydown", {
           key: "Enter",
           code: "Enter",
-          keyCode: 13, // Para compatibilidad
-          which: 13, // Para compatibilidad
+          keyCode: 13,
+          which: 13,
           bubbles: true,
-          cancelable: true, // Importante si algún manejador quiere prevenir la acción por defecto
-        })
+          cancelable: true,
+        }),
       );
 
-      // (Opcional) Disparar 'keyup' para "Enter".
-      // el.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter", code: "Enter", bubbles: true, cancelable: true }));
-
-      // 5. Disparar 'change' (CRUCIAL, estaba comentado, pero tus logs lo muestran después de Enter)
       el.dispatchEvent(new Event("change", { bubbles: true }));
-
-      // 6. Disparar 'blur' (para simular la pérdida de foco, también estaba comentado y tus logs lo muestran al final)
-      // Puedes usar new FocusEvent o directamente el.blur()
-      // el.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
-      el.blur(); // el.blur() es más directo para simplemente quitar el foco.
+      el.blur();
     } else {
-      console.warn(
-        `[simulateTypingAndEnter] Elemento no encontrado para selector: ${selector}`
-      );
+      console.warn(`Element not found for selector: ${selector}`);
     }
   } catch (error) {
-    console.error(
-      `[simulateTypingAndEnter] Error simulando tipeo para selector: ${selector}`,
-      error
-    );
+    console.error(`Error simulating typing for selector: ${selector}`, error);
   }
 }
 
