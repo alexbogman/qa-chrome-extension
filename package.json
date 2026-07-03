@@ -15,7 +15,6 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
-    "@faker-js/faker": "^9.8.0",
     "date-fns": "^4.1.0"
   }
 }

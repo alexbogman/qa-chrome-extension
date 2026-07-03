@@ -1,6 +1,6 @@
-import { faker } from "@faker-js/faker/locale/en";
 import { addMonths, format, parse } from "date-fns";
 import { selectDropdownValue, setValue, simulateTyping } from "../dom-actions";
+import { generatePatientTestData } from "../patient-test-data";
 import { VaccineScheduleInMonths } from "../../vaccine-data";
 import {
   PP_URL_LOCAL,
@@ -77,25 +77,7 @@ export class Canid {
   }
 
   async fillPatientForm() {
-    const sexType = faker.person.sexType();
-    const firstName = faker.person.firstName(sexType);
-    const lastName = faker.person.lastName();
-    const data = {
-      mrn: `QAT${faker.number
-        .bigInt({ min: 1000000000, max: 9999999999 })
-        .toString()}`,
-      firstName,
-      lastName,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
-      phone: faker.phone.number(),
-      address: faker.location.streetAddress(),
-      city: faker.location.city(),
-      zip: faker.location.zipCode(),
-      dob: format(
-        faker.date.birthdate({ min: 0, max: 18, mode: "age" }),
-        "yyyy/MM/dd",
-      ),
-    };
+    const data = generatePatientTestData();
 
     await setValue(
       '[data-automation-id="patient-basic-mrn"] > input',

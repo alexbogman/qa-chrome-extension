@@ -5,7 +5,7 @@ Chrome extension for QA engineers working on Canid's Practice Portal and Interna
 ## Features
 
 - **Highlight automation IDs** – Visual overlay on elements with `data-automation-id`
-- **Fill patient form** – Populate the patient form with random test data (Faker)
+- **Fill patient form** – Populate the patient form with random test data
 - **Add historic immunizations** – Insert immunization history based on patient age and CDC schedule
 - **Environment alert** – Banner on page load indicating local, staging, or production
 
