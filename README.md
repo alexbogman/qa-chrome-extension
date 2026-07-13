@@ -1,6 +1,6 @@
 # QA Tools – Chrome Extension
 
-Extensión de Chrome para el equipo de QA de Canid. Funciona en **Practice Portal** e **Internal Tools** y automatiza tareas repetitivas del día a día: resaltar selectores de prueba, rellenar formularios y cargar inmunizaciones históricas.
+Extensión de Chrome para el equipo de QA de Canid (v3.1). Funciona en **Practice Portal** e **Internal Tools** y automatiza tareas repetitivas del día a día: resaltar selectores de prueba, rellenar formularios, cargar inmunizaciones históricas y **anotar elementos del DOM** durante el testing.
 
 ## Requisitos
 
@@ -117,6 +117,46 @@ Ejemplo de JSON copiado:
 }
 ```
 
+### DOM Notes
+
+Permite dejar notas sobre elementos específicos de la página para documentar qué se testeó y facilitar reportes de casos de prueba.
+
+**Cómo agregar una nota:**
+
+1. Click derecho sobre el elemento que querés anotar
+2. Elegí **Add QA Note** en el menú contextual
+3. Escribí la nota en el overlay y hacé clic en **Save**
+
+En la página aparece un **círculo ámbar numerado** sobre el elemento. Al pasar el mouse se muestra un tooltip con la nota, el selector CSS y la hora. Al hacer clic en el círculo podés eliminar la nota.
+
+Las notas se guardan en `chrome.storage.local` y persisten por URL (cada página tiene su propia lista). Al recargar la página, los círculos se restauran automáticamente.
+
+**Desde el popup** (sección DOM Notes):
+
+| Acción | Descripción |
+|---|---|
+| Lista de notas | Muestra todas las notas de la pestaña actual con selector, texto y timestamp |
+| Copy as text | Copia un reporte formateado al portapapeles |
+| Download report | Descarga un archivo `.txt` con el reporte |
+| Clear all | Borra todas las notas de la página actual |
+
+El selector se genera automáticamente priorizando `#id`, `[data-automation-id]` o un path CSS (`tag:nth-of-type`).
+
+Ejemplo de reporte copiado/descargado:
+
+```
+QA Test Notes — https://app.canid.io/patients/123
+Generated: 07/13/2026, 14:30
+
+[1] Selector: [data-automation-id="patient-name"]
+    Note: Name field accepts special chars — tested ✓
+    Time: 07/13/2026, 14:22
+
+[2] Selector: button.submit-btn
+    Note: Submit disabled when DOB is empty — expected behavior
+    Time: 07/13/2026, 14:25
+```
+
 ---
 
 ## URLs soportadas
@@ -129,6 +169,20 @@ La extensión solo se inyecta en:
 | Internal Tools | `http://localhost:3001/*`, `http://localhost:4000/*`, `http://localhost:4001/*`, `https://internal-tools-staging.canid.io/*`, `https://internal-tools.canid.io/*` |
 
 Si el popup muestra *"Extension not available on this page"*, la pestaña activa no está en una URL soportada.
+
+---
+
+## Arquitectura
+
+| Componente | Rol |
+|---|---|
+| `popup.ts` | UI del popup: toggles, acciones, lista de notas, copy/download |
+| `content.ts` | Script inyectado en las páginas de Canid |
+| `background.ts` | Service worker: registra el ítem **Add QA Note** en el menú contextual |
+| `libs/notes.ts` | Lógica de anotaciones: overlay, círculos, tooltips y persistencia |
+| `libs/classes/canid.ts` | Lógica de formularios, inmunizaciones y environment alert |
+
+Los datos se persisten en `chrome.storage.local`. La comunicación entre popup/content script y el background es vía `chrome.runtime.sendMessage` / `chrome.tabs.sendMessage`.
 
 ---
 

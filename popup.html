@@ -17,7 +17,7 @@
                 <p class="header__subtitle">Canid testing utilities</p>
             </div>
         </div>
-        <span class="badge">v3.0</span>
+        <span class="badge">v3.1</span>
     </header>
 
     <main class="main">
@@ -71,6 +71,32 @@
             <button type="button" class="btn btn--outline btn--full" id="copyImmunizationsDataBtn" disabled>
                 Copy JSON
             </button>
+        </section>
+
+        <article class="card" id="notesCard">
+            <div class="card__content">
+                <div class="card__icon card__icon--notes" aria-hidden="true">📍</div>
+                <div class="card__text">
+                    <h2 class="card__title">DOM Notes</h2>
+                    <p class="card__description">Right-click any element → <strong>Add QA Note</strong> to annotate</p>
+                </div>
+            </div>
+        </article>
+
+        <section class="notes-section" id="notesSection">
+            <p class="copy-section__label">Notes on this page (<span id="notesCount">0</span>)</p>
+            <ul class="notes-list" id="notesList"></ul>
+            <div class="notes-actions">
+                <button type="button" class="btn btn--outline btn--full" id="copyNotesBtn" disabled>
+                    Copy as text
+                </button>
+                <button type="button" class="btn btn--outline btn--full" id="downloadReportBtn" disabled>
+                    Download report
+                </button>
+                <button type="button" class="btn btn--ghost btn--full" id="clearNotesBtn" disabled>
+                    Clear all
+                </button>
+            </div>
         </section>
 
         <p id="status" class="status" role="status" aria-live="polite"></p>

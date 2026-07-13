@@ -3,13 +3,35 @@ import { ELEMENT_NOT_FOUND } from "./libs/constants/canid.ts";
 import { LAST_PATIENT_DATA_KEY, LAST_IMMUNIZATIONS_DATA_KEY } from "./libs/constants/storage.ts";
 import DataAutomationId from "./libs/data-automation-id.ts";
 import { onReady } from "./libs/dom-actions.ts";
+import { NoteManager } from "./libs/notes.ts";
 
 let isHighlightingEnabled = false;
 const dataAutomationId = new DataAutomationId();
 const canid = new Canid();
+const noteManager = new NoteManager();
 
 onReady(() => {
   canid.insertEnvAlert(window.location.href);
+  noteManager.renderAll();
+
+  document.addEventListener(
+    "contextmenu",
+    (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        noteManager.setContextMenuTarget(null);
+        return;
+      }
+
+      if (target.closest("[data-qa-note-ui]")) {
+        noteManager.setContextMenuTarget(null);
+        return;
+      }
+
+      noteManager.setContextMenuTarget(target);
+    },
+    true,
+  );
 
   chrome.storage.local.get("isHighlightingEnabled", (result) => {
     isHighlightingEnabled = result.isHighlightingEnabled ?? false;
@@ -51,6 +73,29 @@ onReady(() => {
         }
         chrome.storage.local.set({ [LAST_IMMUNIZATIONS_DATA_KEY]: res });
         sendResponse({ success: true, immunizationsData: res });
+      });
+      return true;
+    }
+
+    if (message.action === "addNoteFromContextMenu") {
+      const opened = noteManager.openNoteForContextMenu();
+      sendResponse({
+        success: opened,
+        error: opened ? undefined : "No element selected",
+      });
+      return false;
+    }
+
+    if (message.action === "deleteNote" && typeof message.id === "string") {
+      noteManager.deleteNote(message.id).then(() => {
+        sendResponse({ success: true });
+      });
+      return true;
+    }
+
+    if (message.action === "clearNotes") {
+      noteManager.clearNotesForCurrentUrl().then(() => {
+        sendResponse({ success: true });
       });
       return true;
     }

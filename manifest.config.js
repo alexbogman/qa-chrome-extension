@@ -14,10 +14,14 @@ const CANID_URLS = [
 export default defineManifest({
   manifest_version: 3,
   name: 'QA Tools',
-  version: '3.0',
+  version: '3.1',
   description: 'Tools to make easy job for QA engineers',
   author: 'Canid QA Team',
-  permissions: ['activeTab', 'storage'],
+  permissions: ['activeTab', 'storage', 'contextMenus'],
+  background: {
+    service_worker: 'background.ts',
+    type: 'module',
+  },
   content_scripts: [
     {
       matches: CANID_URLS,

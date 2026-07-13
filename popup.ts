@@ -1,8 +1,10 @@
 import type { PatientTestData } from "./libs/patient-test-data.ts";
 import type { HistoricImmunizationsData } from "./libs/historic-immunizations-data.ts";
+import type { PageNote } from "./libs/notes.ts";
 import {
   LAST_PATIENT_DATA_KEY,
   LAST_IMMUNIZATIONS_DATA_KEY,
+  PAGE_NOTES_KEY,
 } from "./libs/constants/storage.ts";
 
 const highlightToggle = document.getElementById(
@@ -22,9 +24,22 @@ const lastPatientPreview = document.getElementById("lastPatientPreview");
 const lastImmunizationsPreview = document.getElementById(
   "lastImmunizationsPreview",
 );
+const notesCount = document.getElementById("notesCount");
+const notesList = document.getElementById("notesList");
+const copyNotesBtn = document.getElementById(
+  "copyNotesBtn",
+) as HTMLButtonElement | null;
+const downloadReportBtn = document.getElementById(
+  "downloadReportBtn",
+) as HTMLButtonElement | null;
+const clearNotesBtn = document.getElementById(
+  "clearNotesBtn",
+) as HTMLButtonElement | null;
 const statusEl = document.getElementById("status");
 
 let highlightEnabled = false;
+let currentTabUrl = "";
+let currentPageNotes: PageNote[] = [];
 let lastPatientData: PatientTestData | null = null;
 let lastImmunizationsData: HistoricImmunizationsData | null = null;
 
@@ -109,6 +124,125 @@ function updateImmunizationsCopySection() {
   );
 }
 
+function formatNoteTimestamp(iso: string): string {
+  const date = new Date(iso);
+  return date.toLocaleString(undefined, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatNotesReport(url: string, notes: PageNote[]): string {
+  const generatedAt = formatNoteTimestamp(new Date().toISOString());
+  const header = `QA Test Notes — ${url}\nGenerated: ${generatedAt}\n`;
+
+  if (notes.length === 0) {
+    return `${header}\nNo notes recorded for this page.`;
+  }
+
+  const body = notes
+    .map((note, index) => {
+      return `[${index + 1}] Selector: ${note.selector}
+    Note: ${note.note}
+    Time: ${formatNoteTimestamp(note.createdAt)}`;
+    })
+    .join("\n\n");
+
+  return `${header}\n${body}`;
+}
+
+function updateNotesSection() {
+  const hasNotes = currentPageNotes.length > 0;
+
+  if (notesCount) {
+    notesCount.textContent = String(currentPageNotes.length);
+  }
+
+  if (copyNotesBtn) {
+    copyNotesBtn.disabled = !hasNotes;
+  }
+  if (downloadReportBtn) {
+    downloadReportBtn.disabled = !hasNotes;
+  }
+  if (clearNotesBtn) {
+    clearNotesBtn.disabled = !hasNotes;
+  }
+
+  if (!notesList) return;
+
+  notesList.innerHTML = "";
+
+  if (!hasNotes) {
+    const emptyItem = document.createElement("li");
+    emptyItem.className = "note-item note-item--empty";
+    emptyItem.textContent = "No notes yet — right-click an element and choose Add QA Note";
+    notesList.appendChild(emptyItem);
+    return;
+  }
+
+  currentPageNotes.forEach((note, index) => {
+    const item = document.createElement("li");
+    item.className = "note-item";
+
+    const badge = document.createElement("span");
+    badge.className = "note-item__badge";
+    badge.textContent = String(index + 1);
+
+    const content = document.createElement("div");
+    content.className = "note-item__content";
+
+    const selector = document.createElement("code");
+    selector.className = "note-item__selector";
+    selector.textContent = note.selector;
+    selector.title = note.selector;
+
+    const text = document.createElement("p");
+    text.className = "note-item__text";
+    text.textContent = note.note;
+
+    const time = document.createElement("span");
+    time.className = "note-item__time";
+    time.textContent = formatNoteTimestamp(note.createdAt);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "note-item__delete";
+    deleteBtn.setAttribute("aria-label", `Delete note ${index + 1}`);
+    deleteBtn.textContent = "×";
+    deleteBtn.addEventListener("click", async () => {
+      const result = await sendToActiveTab({
+        action: "deleteNote",
+        id: note.id,
+      });
+      if (result.success) {
+        currentPageNotes = currentPageNotes.filter((n) => n.id !== note.id);
+        updateNotesSection();
+        setStatus("Note deleted", "success");
+      } else {
+        setStatus(result.error ?? "Could not delete note", "error");
+      }
+    });
+
+    content.append(selector, text, time);
+    item.append(badge, content, deleteBtn);
+    notesList.appendChild(item);
+  });
+}
+
+function loadNotesForCurrentTab() {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    currentTabUrl = tabs[0]?.url ?? "";
+    chrome.storage.local.get(PAGE_NOTES_KEY, (result) => {
+      const allNotes = (result[PAGE_NOTES_KEY] as PageNote[] | undefined) ?? [];
+      currentPageNotes = allNotes.filter((note) => note.url === currentTabUrl);
+      updateNotesSection();
+    });
+  });
+}
+
 function loadStoredData() {
   chrome.storage.local.get(
     [LAST_PATIENT_DATA_KEY, LAST_IMMUNIZATIONS_DATA_KEY],
@@ -156,6 +290,15 @@ chrome.storage.local.get("isHighlightingEnabled", (result) => {
 });
 
 loadStoredData();
+loadNotesForCurrentTab();
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== "local" || !changes[PAGE_NOTES_KEY]) return;
+  const allNotes =
+    (changes[PAGE_NOTES_KEY].newValue as PageNote[] | undefined) ?? [];
+  currentPageNotes = allNotes.filter((note) => note.url === currentTabUrl);
+  updateNotesSection();
+});
 
 if (highlightToggle) {
   highlightToggle.addEventListener("change", () => {
@@ -243,5 +386,61 @@ if (copyImmunizationsDataBtn) {
       lastImmunizationsData,
       "Immunizations JSON copied to clipboard",
     );
+  });
+}
+
+if (copyNotesBtn) {
+  copyNotesBtn.addEventListener("click", async () => {
+    if (currentPageNotes.length === 0) return;
+    try {
+      const report = formatNotesReport(currentTabUrl, currentPageNotes);
+      await navigator.clipboard.writeText(report);
+      const originalText = copyNotesBtn.textContent;
+      copyNotesBtn.textContent = "Copied!";
+      setStatus("Notes copied to clipboard", "success");
+      setTimeout(() => {
+        copyNotesBtn.textContent = originalText;
+      }, 1500);
+    } catch {
+      setStatus("Could not copy to clipboard", "error");
+    }
+  });
+}
+
+if (downloadReportBtn) {
+  downloadReportBtn.addEventListener("click", () => {
+    if (currentPageNotes.length === 0) return;
+
+    const report = formatNotesReport(currentTabUrl, currentPageNotes);
+    const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const safeHost = (() => {
+      if (!currentTabUrl) return "page";
+      try {
+        return new URL(currentTabUrl).hostname.replace(/[^a-z0-9.-]/gi, "-");
+      } catch {
+        return "page";
+      }
+    })();
+    const timestamp = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `qa-notes-${safeHost}-${timestamp}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setStatus("Report downloaded", "success");
+  });
+}
+
+if (clearNotesBtn) {
+  clearNotesBtn.addEventListener("click", async () => {
+    const result = await sendToActiveTab({ action: "clearNotes" });
+    if (result.success) {
+      currentPageNotes = [];
+      updateNotesSection();
+      setStatus("All notes cleared for this page", "success");
+    } else {
+      setStatus(result.error ?? "Could not clear notes", "error");
+    }
   });
 }
