@@ -14,7 +14,7 @@ const CANID_URLS = [
 export default defineManifest({
   manifest_version: 3,
   name: 'QA Tools',
-  version: '3.1',
+  version: '3.2',
   description: 'Tools to make easy job for QA engineers',
   author: 'Canid QA Team',
   permissions: ['activeTab', 'storage', 'contextMenus'],

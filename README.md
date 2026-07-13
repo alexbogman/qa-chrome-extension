@@ -1,6 +1,6 @@
 # QA Tools – Chrome Extension
 
-Extensión de Chrome para el equipo de QA de Canid (v3.1). Funciona en **Practice Portal** e **Internal Tools** y automatiza tareas repetitivas del día a día: resaltar selectores de prueba, rellenar formularios, cargar inmunizaciones históricas y **anotar elementos del DOM** durante el testing.
+Extensión de Chrome para el equipo de QA de Canid (v3.2). Funciona en **Practice Portal** e **Internal Tools** y automatiza tareas repetitivas del día a día: resaltar selectores de prueba, rellenar formularios, cargar inmunizaciones históricas y **anotar elementos del DOM** durante el testing.
 
 ## Requisitos
 

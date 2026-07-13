@@ -1,4 +1,5 @@
 import { PAGE_NOTES_KEY } from "./constants/storage.ts";
+import { getPageScope } from "./page-scope.ts";
 
 export interface PageNote {
   id: string;
@@ -11,25 +12,30 @@ export interface PageNote {
 }
 
 const QA_NOTES_STYLE_ID = "qa-notes-style";
+const NOTE_CIRCLE_COLOR = "#45b39d";
+const NOTE_CIRCLE_HOVER_COLOR = "#3d9e8b";
 
 export class NoteManager {
-  private currentUrl = window.location.href;
+  private currentPageScope = getPageScope();
   private pageNotes: PageNote[] = [];
   private activeOverlay: HTMLElement | null = null;
+  private lastContextMenuTarget: HTMLElement | null = null;
+  private refreshTimeout: ReturnType<typeof setTimeout> | undefined;
+  private boundRefreshCircles = () => this.scheduleRefreshCircles();
 
   constructor() {
     this.injectStyles();
+    this.setupNavigationListener();
+    this.setupPositionSync();
   }
 
   setContextMenuTarget(element: HTMLElement | null): void {
     this.lastContextMenuTarget = element;
   }
 
-  private lastContextMenuTarget: HTMLElement | null = null;
-
   async renderAll(): Promise<void> {
-    this.currentUrl = window.location.href;
-    this.pageNotes = await this.loadNotesForCurrentUrl();
+    this.currentPageScope = getPageScope();
+    this.pageNotes = await this.loadNotesForCurrentPage();
     this.removeAllCircles();
     this.pageNotes.forEach((note, index) => {
       this.addCircle(note, index + 1);
@@ -50,16 +56,64 @@ export class NoteManager {
     const allNotes = await this.loadAllNotes();
     const updatedNotes = allNotes.filter((note) => note.id !== id);
     await this.saveAllNotes(updatedNotes);
-    this.pageNotes = updatedNotes.filter((note) => note.url === this.currentUrl);
+    this.pageNotes = updatedNotes.filter((note) => this.noteMatchesPage(note));
     this.removeCircle(id);
+    this.renumberCircles();
   }
 
   async clearNotesForCurrentUrl(): Promise<void> {
     const allNotes = await this.loadAllNotes();
-    const updatedNotes = allNotes.filter((note) => note.url !== this.currentUrl);
+    const updatedNotes = allNotes.filter((note) => !this.noteMatchesPage(note));
     await this.saveAllNotes(updatedNotes);
     this.pageNotes = [];
     this.removeAllCircles();
+  }
+
+  private setupNavigationListener(): void {
+    window.addEventListener("popstate", this.boundRefreshCircles);
+
+    const originalPushState = history.pushState.bind(history);
+    const originalReplaceState = history.replaceState.bind(history);
+
+    history.pushState = (...args) => {
+      originalPushState(...args);
+      this.scheduleRefreshCircles();
+    };
+
+    history.replaceState = (...args) => {
+      originalReplaceState(...args);
+      this.scheduleRefreshCircles();
+    };
+  }
+
+  private setupPositionSync(): void {
+    window.addEventListener("scroll", this.boundRefreshCircles, true);
+    window.addEventListener("resize", this.boundRefreshCircles);
+
+    const observer = new MutationObserver(() => {
+      this.scheduleRefreshCircles();
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  private scheduleRefreshCircles(): void {
+    clearTimeout(this.refreshTimeout);
+    this.refreshTimeout = setTimeout(() => {
+      const nextScope = getPageScope();
+      if (nextScope !== this.currentPageScope) {
+        this.renderAll();
+        return;
+      }
+      this.refreshVisibleCircles();
+    }, 200);
+  }
+
+  private refreshVisibleCircles(): void {
+    this.removeAllCircles();
+    this.pageNotes.forEach((note, index) => {
+      this.addCircle(note, index + 1);
+    });
   }
 
   private showInputOverlay(element: HTMLElement, rect: DOMRect): void {
@@ -113,7 +167,7 @@ export class NoteManager {
 
       const note: PageNote = {
         id: crypto.randomUUID(),
-        url: this.currentUrl,
+        url: getPageScope(),
         selector,
         elementLabel,
         note: noteText,
@@ -155,8 +209,14 @@ export class NoteManager {
   }
 
   private addCircle(note: PageNote, index: number): void {
+    const element = this.findNoteElement(note.selector);
+    if (!element || !this.isElementVisible(element)) {
+      return;
+    }
+
     if (document.querySelector(`[data-qa-note-id="${note.id}"]`)) return;
 
+    const rect = element.getBoundingClientRect();
     const circle = document.createElement("div");
     circle.className = "qa-note-circle";
     circle.setAttribute("data-qa-note-id", note.id);
@@ -164,11 +224,7 @@ export class NoteManager {
     circle.textContent = String(index);
     circle.title = note.note;
 
-    const { top, left, width, height } = note.rect;
-    const circleTop = top + height / 2 - 12;
-    const circleLeft = left + width / 2 - 12;
-    circle.style.top = `${circleTop}px`;
-    circle.style.left = `${circleLeft}px`;
+    this.positionCircle(circle, rect);
 
     const tooltip = document.createElement("div");
     tooltip.className = "qa-note-tooltip";
@@ -196,6 +252,13 @@ export class NoteManager {
     });
 
     document.body.appendChild(circle);
+  }
+
+  private positionCircle(circle: HTMLElement, rect: DOMRect): void {
+    const circleTop = rect.top + rect.height / 2 - 12;
+    const circleLeft = rect.left + rect.width / 2 - 12;
+    circle.style.top = `${circleTop}px`;
+    circle.style.left = `${circleLeft}px`;
   }
 
   private showEditMenu(note: PageNote, circle: HTMLElement): void {
@@ -252,9 +315,31 @@ export class NoteManager {
     this.activeOverlay = menu;
   }
 
+  private findNoteElement(selector: string): HTMLElement | null {
+    try {
+      const element = document.querySelector(selector);
+      return element instanceof HTMLElement ? element : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private isElementVisible(element: HTMLElement): boolean {
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) {
+      return false;
+    }
+
+    const style = window.getComputedStyle(element);
+    if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") {
+      return false;
+    }
+
+    return true;
+  }
+
   private removeCircle(id: string): void {
     document.querySelector(`[data-qa-note-id="${id}"]`)?.remove();
-    this.renumberCircles();
   }
 
   private removeAllCircles(): void {
@@ -272,7 +357,15 @@ export class NoteManager {
     const allNotes = await this.loadAllNotes();
     allNotes.push(note);
     await this.saveAllNotes(allNotes);
-    this.pageNotes = allNotes.filter((n) => n.url === this.currentUrl);
+    this.pageNotes = allNotes.filter((n) => this.noteMatchesPage(n));
+  }
+
+  private noteMatchesPage(note: PageNote): boolean {
+    if (note.url === this.currentPageScope) {
+      return true;
+    }
+
+    return getPageScope(note.url) === this.currentPageScope;
   }
 
   private loadAllNotes(): Promise<PageNote[]> {
@@ -283,9 +376,9 @@ export class NoteManager {
     });
   }
 
-  private async loadNotesForCurrentUrl(): Promise<PageNote[]> {
+  private async loadNotesForCurrentPage(): Promise<PageNote[]> {
     const allNotes = await this.loadAllNotes();
-    return allNotes.filter((note) => note.url === this.currentUrl);
+    return allNotes.filter((note) => this.noteMatchesPage(note));
   }
 
   private saveAllNotes(notes: PageNote[]): Promise<void> {
@@ -368,8 +461,8 @@ export class NoteManager {
         width: 1.5rem;
         height: 1.5rem;
         border-radius: 50%;
-        background: hsl(38 92% 50%);
-        color: hsl(0 0% 0%);
+        background: ${NOTE_CIRCLE_COLOR};
+        color: hsl(0 0% 100%);
         font-size: 0.75rem;
         font-weight: 700;
         display: flex;
@@ -383,7 +476,7 @@ export class NoteManager {
       }
 
       .qa-note-circle:hover {
-        background: hsl(38 92% 45%);
+        background: ${NOTE_CIRCLE_HOVER_COLOR};
       }
 
       .qa-note-tooltip {

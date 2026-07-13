@@ -134,7 +134,8 @@ body {
 }
 
 .card__icon--notes {
-    background-color: hsl(38 92% 50% / 0.15);
+    background-color: rgb(69 179 157 / 0.15);
+    color: #45b39d;
 }
 
 .card__title {
@@ -357,8 +358,8 @@ body {
     width: 1.25rem;
     height: 1.25rem;
     border-radius: 50%;
-    background-color: hsl(38 92% 50%);
-    color: hsl(0 0% 0%);
+    background-color: #45b39d;
+    color: hsl(0 0% 100%);
     font-size: 0.625rem;
     font-weight: 700;
 }

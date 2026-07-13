@@ -1,6 +1,7 @@
 import type { PatientTestData } from "./libs/patient-test-data.ts";
 import type { HistoricImmunizationsData } from "./libs/historic-immunizations-data.ts";
 import type { PageNote } from "./libs/notes.ts";
+import { getPageScope } from "./libs/page-scope.ts";
 import {
   LAST_PATIENT_DATA_KEY,
   LAST_IMMUNIZATIONS_DATA_KEY,
@@ -137,7 +138,8 @@ function formatNoteTimestamp(iso: string): string {
 
 function formatNotesReport(url: string, notes: PageNote[]): string {
   const generatedAt = formatNoteTimestamp(new Date().toISOString());
-  const header = `QA Test Notes — ${url}\nGenerated: ${generatedAt}\n`;
+  const pageScope = getPageScope(url);
+  const header = `QA Test Notes — ${pageScope}\nGenerated: ${generatedAt}\n`;
 
   if (notes.length === 0) {
     return `${header}\nNo notes recorded for this page.`;
@@ -235,9 +237,12 @@ function updateNotesSection() {
 function loadNotesForCurrentTab() {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     currentTabUrl = tabs[0]?.url ?? "";
+    const pageScope = getPageScope(currentTabUrl);
     chrome.storage.local.get(PAGE_NOTES_KEY, (result) => {
       const allNotes = (result[PAGE_NOTES_KEY] as PageNote[] | undefined) ?? [];
-      currentPageNotes = allNotes.filter((note) => note.url === currentTabUrl);
+      currentPageNotes = allNotes.filter(
+        (note) => note.url === pageScope || getPageScope(note.url) === pageScope,
+      );
       updateNotesSection();
     });
   });
@@ -296,7 +301,10 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== "local" || !changes[PAGE_NOTES_KEY]) return;
   const allNotes =
     (changes[PAGE_NOTES_KEY].newValue as PageNote[] | undefined) ?? [];
-  currentPageNotes = allNotes.filter((note) => note.url === currentTabUrl);
+  const pageScope = getPageScope(currentTabUrl);
+  currentPageNotes = allNotes.filter(
+    (note) => note.url === pageScope || getPageScope(note.url) === pageScope,
+  );
   updateNotesSection();
 });
 
