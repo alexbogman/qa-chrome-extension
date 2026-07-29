@@ -1,6 +1,16 @@
 import { addMonths, format, parse } from "date-fns";
-import { selectDropdownValue, setValue, simulateTyping } from "../dom-actions";
-import { generatePatientTestData, type PatientTestData } from "../patient-test-data";
+import {
+  elementExists,
+  selectDropdownValue,
+  selectOptionByText,
+  setValue,
+  simulateTyping,
+} from "../dom-actions";
+import {
+  generatePatientTestData,
+  type GuardianTestData,
+  type PatientTestData,
+} from "../patient-test-data";
 import type { HistoricImmunizationsData, HistoricImmunizationDose } from "../historic-immunizations-data";
 import { VaccineScheduleInMonths } from "../../vaccine-data";
 import {
@@ -114,7 +124,83 @@ export class Canid {
       data.zip,
     );
 
+    // Guardian section only renders when practice settings.guardian.enabled is on
+    // (and the form is not shortForm). Detect via first-name field from bluefox PatientForm.
+    if (
+      elementExists(
+        '[data-automation-id="patient-basic-guardian-firstname"]',
+      )
+    ) {
+      await this.fillGuardianFields(data.guardian);
+    }
+
     return data;
+  }
+
+  private async fillGuardianFields(guardian: GuardianTestData) {
+    await setValue(
+      '[data-automation-id="patient-basic-guardian-firstname"] input',
+      guardian.firstName,
+    );
+    await setValue(
+      '[data-automation-id="patient-basic-guardian-lastname"] input',
+      guardian.lastName,
+    );
+    await simulateTyping(
+      '[data-automation-id="patient-basic-guardian-date-of-birth"] input',
+      guardian.dob,
+    );
+
+    // Sex / phone are IIS-gated; skip silently if not in the DOM.
+    if (elementExists('[data-automation-id="patient-basic-guardian-sex"]')) {
+      await selectOptionByText(
+        '[data-automation-id="patient-basic-guardian-sex"]',
+        guardian.sex,
+      );
+    }
+
+    await setValue(
+      '[data-automation-id="patient-basic-guardian-email"] input',
+      guardian.email,
+    );
+
+    if (elementExists('[data-automation-id="patient-basic-guardian-phone"]')) {
+      await setValue(
+        '[data-automation-id="patient-basic-guardian-phone"] input',
+        guardian.phone,
+      );
+    }
+
+    await selectOptionByText(
+      '[data-automation-id="patient-basic-guardian-relationship"]',
+      guardian.relationship,
+    );
+
+    // Address fields are hidden when "Use same address as patient" is checked.
+    if (
+      elementExists('[data-automation-id="patient-basic-guardian-street"]')
+    ) {
+      await setValue(
+        '[data-automation-id="patient-basic-guardian-street"] input',
+        guardian.address,
+      );
+      await setValue(
+        '[data-automation-id="patient-basic-guardian-city"] input',
+        guardian.city,
+      );
+      if (
+        elementExists('[data-automation-id="patient-basic-guardian-state"]')
+      ) {
+        await selectOptionByText(
+          '[data-automation-id="patient-basic-guardian-state"]',
+          guardian.state,
+        );
+      }
+      await setValue(
+        '[data-automation-id="patient-basic-guardian-zip"] input',
+        guardian.zip,
+      );
+    }
   }
 
   async addHistoricImmunizations(): Promise<

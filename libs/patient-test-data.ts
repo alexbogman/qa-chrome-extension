@@ -320,6 +320,62 @@ function randomPhone(): string {
   return pick(formats)();
 }
 
+/** Matches PhoneInput mask `(999) 999 9999` used on guardian phone. */
+function randomMaskedPhone(): string {
+  return `(${randomInt(200, 999)}) ${randomInt(200, 999)} ${randomInt(1000, 9999)}`;
+}
+
+function randomAdultBirthdate(minAgeYears = 25, maxAgeYears = 65): Date {
+  const today = new Date();
+  const daysAgo = randomInt(minAgeYears * 365, maxAgeYears * 365);
+  const birth = new Date(today);
+  birth.setDate(birth.getDate() - daysAgo);
+  return birth;
+}
+
+const GUARDIAN_SEXES = ["Male", "Female", "Unknown"] as const;
+const US_STATES = [
+  "New York",
+  "New Jersey",
+  "Georgia",
+  "Florida",
+  "Ohio",
+  "Alabama",
+  "California",
+  "Texas",
+  "Pennsylvania",
+  "Illinois",
+] as const;
+
+export function generateGuardianTestData() {
+  const sex = randomSex();
+  const firstName = pick(
+    sex === "male" ? MALE_FIRST_NAMES : FEMALE_FIRST_NAMES,
+  );
+  const lastName = pick(LAST_NAMES);
+  const suffix = pickAddressSuffix();
+  const relationship =
+    sex === "male"
+      ? pick(["Father", "Other"] as const)
+      : pick(["Mother", "Other"] as const);
+
+  return {
+    firstName,
+    lastName,
+    dob: formatDate(randomAdultBirthdate()),
+    sex: pick(GUARDIAN_SEXES),
+    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}.guardian@example.com`,
+    phone: randomMaskedPhone(),
+    relationship,
+    address: `${randomInt(100, 9999)} ${pick(STREET_NAMES)}${suffix}`,
+    city: pick(CITIES),
+    state: pick(US_STATES),
+    zip: String(randomInt(10000, 99999)),
+  };
+}
+
+export type GuardianTestData = ReturnType<typeof generateGuardianTestData>;
+
 export function generatePatientTestData() {
   const sex = randomSex();
   const firstName = pick(
@@ -338,6 +394,7 @@ export function generatePatientTestData() {
     city: pick(CITIES),
     zip: String(randomInt(10000, 99999)),
     dob: formatDate(randomBirthdate(18)),
+    guardian: generateGuardianTestData(),
   };
 }
 

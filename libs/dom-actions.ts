@@ -1,3 +1,57 @@
+function delay(ms: number) {
+  return new Promise((res) => setTimeout(res, ms));
+}
+
+export function elementExists(selector: string): boolean {
+  return !!document.querySelector(selector);
+}
+
+/** Select a Semantic UI dropdown option by its visible text (works with or without search). */
+export async function selectOptionByText(
+  selector: string,
+  optionText: string,
+) {
+  try {
+    const dropdown: HTMLElement | null = document.querySelector(selector);
+    if (!dropdown) {
+      console.warn(`Dropdown not found for selector: ${selector}`);
+      return;
+    }
+
+    dropdown.click();
+    await delay(150);
+
+    let match: HTMLElement | undefined;
+    for (let tries = 0; tries < 20; tries++) {
+      const options = Array.from(
+        dropdown.querySelectorAll('div[role="option"]'),
+      ) as HTMLElement[];
+      match = options.find((opt) => {
+        const text =
+          opt.querySelector(".text")?.textContent?.trim() ||
+          opt.textContent?.trim();
+        return text === optionText;
+      });
+      if (match) break;
+      await delay(100);
+    }
+
+    if (match) {
+      match.click();
+      await delay(200);
+    } else {
+      console.warn(
+        `Dropdown option not found for text "${optionText}" (selector: ${selector})`,
+      );
+    }
+  } catch (err) {
+    console.error(
+      `Error selecting option "${optionText}" for selector: ${selector}`,
+      err,
+    );
+  }
+}
+
 export async function selectDropdownValue(selector: string, value: string) {
   try {
     const input: HTMLInputElement | null = document.querySelector(selector);
