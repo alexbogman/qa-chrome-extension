@@ -41,6 +41,7 @@ const statusEl = document.getElementById("status");
 let highlightEnabled = false;
 let currentTabUrl = "";
 let currentPageNotes: PageNote[] = [];
+let allPageNotes: PageNote[] = [];
 let lastPatientData: PatientTestData | null = null;
 let lastImmunizationsData: HistoricImmunizationsData | null = null;
 
@@ -156,8 +157,42 @@ function formatNotesReport(url: string, notes: PageNote[]): string {
   return `${header}\n${body}`;
 }
 
+function formatAllNotesReport(notes: PageNote[]): string {
+  const generatedAt = formatNoteTimestamp(new Date().toISOString());
+  const header = `QA Test Notes — All pages\nGenerated: ${generatedAt}\n`;
+
+  if (notes.length === 0) {
+    return `${header}\nNo notes recorded.`;
+  }
+
+  const notesByPage = new Map<string, PageNote[]>();
+  for (const note of notes) {
+    const pageScope = getPageScope(note.url) || note.url || "(unknown page)";
+    const pageNotes = notesByPage.get(pageScope) ?? [];
+    pageNotes.push(note);
+    notesByPage.set(pageScope, pageNotes);
+  }
+
+  let noteIndex = 1;
+  const sections = [...notesByPage.entries()].map(([pageScope, pageNotes]) => {
+    const body = pageNotes
+      .map((note) => {
+        const line = `[${noteIndex}] Selector: ${note.selector}
+    Note: ${note.note}
+    Time: ${formatNoteTimestamp(note.createdAt)}`;
+        noteIndex += 1;
+        return line;
+      })
+      .join("\n\n");
+    return `=== ${pageScope} ===\n\n${body}`;
+  });
+
+  return `${header}\n${sections.join("\n\n")}`;
+}
+
 function updateNotesSection() {
   const hasNotes = currentPageNotes.length > 0;
+  const hasAnyNotes = allPageNotes.length > 0;
 
   if (notesCount) {
     notesCount.textContent = String(currentPageNotes.length);
@@ -167,7 +202,7 @@ function updateNotesSection() {
     copyNotesBtn.disabled = !hasNotes;
   }
   if (downloadReportBtn) {
-    downloadReportBtn.disabled = !hasNotes;
+    downloadReportBtn.disabled = !hasAnyNotes;
   }
   if (clearNotesBtn) {
     clearNotesBtn.disabled = !hasNotes;
@@ -221,6 +256,7 @@ function updateNotesSection() {
       });
       if (result.success) {
         currentPageNotes = currentPageNotes.filter((n) => n.id !== note.id);
+        allPageNotes = allPageNotes.filter((n) => n.id !== note.id);
         updateNotesSection();
         setStatus("Note deleted", "success");
       } else {
@@ -239,8 +275,8 @@ function loadNotesForCurrentTab() {
     currentTabUrl = tabs[0]?.url ?? "";
     const pageScope = getPageScope(currentTabUrl);
     chrome.storage.local.get(PAGE_NOTES_KEY, (result) => {
-      const allNotes = (result[PAGE_NOTES_KEY] as PageNote[] | undefined) ?? [];
-      currentPageNotes = allNotes.filter(
+      allPageNotes = (result[PAGE_NOTES_KEY] as PageNote[] | undefined) ?? [];
+      currentPageNotes = allPageNotes.filter(
         (note) => note.url === pageScope || getPageScope(note.url) === pageScope,
       );
       updateNotesSection();
@@ -299,10 +335,10 @@ loadNotesForCurrentTab();
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== "local" || !changes[PAGE_NOTES_KEY]) return;
-  const allNotes =
+  allPageNotes =
     (changes[PAGE_NOTES_KEY].newValue as PageNote[] | undefined) ?? [];
   const pageScope = getPageScope(currentTabUrl);
-  currentPageNotes = allNotes.filter(
+  currentPageNotes = allPageNotes.filter(
     (note) => note.url === pageScope || getPageScope(note.url) === pageScope,
   );
   updateNotesSection();
@@ -417,23 +453,15 @@ if (copyNotesBtn) {
 
 if (downloadReportBtn) {
   downloadReportBtn.addEventListener("click", () => {
-    if (currentPageNotes.length === 0) return;
+    if (allPageNotes.length === 0) return;
 
-    const report = formatNotesReport(currentTabUrl, currentPageNotes);
+    const report = formatAllNotesReport(allPageNotes);
     const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    const safeHost = (() => {
-      if (!currentTabUrl) return "page";
-      try {
-        return new URL(currentTabUrl).hostname.replace(/[^a-z0-9.-]/gi, "-");
-      } catch {
-        return "page";
-      }
-    })();
     const timestamp = new Date().toISOString().slice(0, 10);
     link.href = url;
-    link.download = `qa-notes-${safeHost}-${timestamp}.txt`;
+    link.download = `qa-notes-all-${timestamp}.txt`;
     link.click();
     URL.revokeObjectURL(url);
     setStatus("Report downloaded", "success");
@@ -444,6 +472,8 @@ if (clearNotesBtn) {
   clearNotesBtn.addEventListener("click", async () => {
     const result = await sendToActiveTab({ action: "clearNotes" });
     if (result.success) {
+      const clearedIds = new Set(currentPageNotes.map((note) => note.id));
+      allPageNotes = allPageNotes.filter((note) => !clearedIds.has(note.id));
       currentPageNotes = [];
       updateNotesSection();
       setStatus("All notes cleared for this page", "success");
