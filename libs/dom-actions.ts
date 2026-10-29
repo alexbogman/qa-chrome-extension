@@ -6,6 +6,26 @@ export function elementExists(selector: string): boolean {
   return !!document.querySelector(selector);
 }
 
+function optionLabel(opt: HTMLElement): string {
+  return (
+    opt.querySelector(".text")?.textContent?.trim() ||
+    opt.textContent?.replace(/\s+/g, " ").trim() ||
+    ""
+  );
+}
+
+function findDropdownOption(
+  root: ParentNode,
+  optionText: string,
+): HTMLElement | undefined {
+  const candidates = [
+    ...Array.from(root.querySelectorAll('div[role="option"]')),
+    ...Array.from(root.querySelectorAll(".visible.menu .item")),
+  ] as HTMLElement[];
+
+  return candidates.find((opt) => optionLabel(opt) === optionText);
+}
+
 /** Select a Semantic UI dropdown option by its visible text (works with or without search). */
 export async function selectOptionByText(
   selector: string,
@@ -23,15 +43,9 @@ export async function selectOptionByText(
 
     let match: HTMLElement | undefined;
     for (let tries = 0; tries < 20; tries++) {
-      const options = Array.from(
-        dropdown.querySelectorAll('div[role="option"]'),
-      ) as HTMLElement[];
-      match = options.find((opt) => {
-        const text =
-          opt.querySelector(".text")?.textContent?.trim() ||
-          opt.textContent?.trim();
-        return text === optionText;
-      });
+      match =
+        findDropdownOption(dropdown, optionText) ||
+        findDropdownOption(document, optionText);
       if (match) break;
       await delay(100);
     }
@@ -49,6 +63,44 @@ export async function selectOptionByText(
       `Error selecting option "${optionText}" for selector: ${selector}`,
       err,
     );
+  }
+}
+
+/** Set value on a React controlled input (native setter + input event). */
+export async function setReactInputValue(
+  selector: string,
+  value: string,
+) {
+  try {
+    const inputs = Array.from(
+      document.querySelectorAll(selector),
+    ) as HTMLInputElement[];
+    if (inputs.length === 0) {
+      console.warn(`Element not found for selector: ${selector}`);
+      return false;
+    }
+
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )?.set;
+
+    for (const el of inputs) {
+      el.focus();
+      if (nativeSetter) {
+        nativeSetter.call(el, value);
+      } else {
+        el.value = value;
+      }
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    await delay(100);
+    return true;
+  } catch (err) {
+    console.error(`Error setting React input for selector: ${selector}`, err);
+    return false;
   }
 }
 

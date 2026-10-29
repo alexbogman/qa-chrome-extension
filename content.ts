@@ -1,9 +1,14 @@
 import { Canid } from "./libs/classes/canid.ts";
 import { ELEMENT_NOT_FOUND } from "./libs/constants/canid.ts";
-import { LAST_PATIENT_DATA_KEY, LAST_IMMUNIZATIONS_DATA_KEY } from "./libs/constants/storage.ts";
+import {
+  LAST_PATIENT_DATA_KEY,
+  LAST_IMMUNIZATIONS_DATA_KEY,
+} from "./libs/constants/storage.ts";
 import DataAutomationId from "./libs/data-automation-id.ts";
-import { onReady } from "./libs/dom-actions.ts";
+import { onReady, setReactInputValue } from "./libs/dom-actions.ts";
+import { fetchPracticeInventoryQr } from "./libs/inventory-qr.ts";
 import { NoteManager } from "./libs/notes.ts";
+import type { PatientAgeType } from "./libs/patient-test-data.ts";
 
 let isHighlightingEnabled = false;
 const dataAutomationId = new DataAutomationId();
@@ -53,8 +58,10 @@ onReady(() => {
     }
 
     if (message.action === "randomPatientData") {
+      const ageType: PatientAgeType =
+        message.ageType === "adult" ? "adult" : "minor";
       canid
-        .fillPatientForm()
+        .fillPatientForm(ageType)
         .then((patientData) => {
           chrome.storage.local.set({ [LAST_PATIENT_DATA_KEY]: patientData });
           sendResponse({ success: true, patientData });
@@ -62,6 +69,43 @@ onReady(() => {
         .catch((err) =>
           sendResponse({ success: false, error: String(err) }),
         );
+      return true;
+    }
+
+    if (message.action === "fetchInventoryQr") {
+      fetchPracticeInventoryQr()
+        .then((inventory) => {
+          sendResponse({ success: true, inventory });
+        })
+        .catch((err) =>
+          sendResponse({
+            success: false,
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
+      return true;
+    }
+
+    if (message.action === "applyInventoryQr") {
+      const qrCode =
+        typeof message.qrCode === "string" ? message.qrCode.trim() : "";
+      if (!qrCode) {
+        sendResponse({ success: false, error: "Missing QR code" });
+        return false;
+      }
+
+      setReactInputValue('[data-automation-id="test-value"]', qrCode).then(
+        (ok) => {
+          if (!ok) {
+            sendResponse({
+              success: false,
+              error: "Scan test-value input not found — open the patient Scan screen",
+            });
+            return;
+          }
+          sendResponse({ success: true });
+        },
+      );
       return true;
     }
 

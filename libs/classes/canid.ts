@@ -9,6 +9,7 @@ import {
 import {
   generatePatientTestData,
   type GuardianTestData,
+  type PatientAgeType,
   type PatientTestData,
 } from "../patient-test-data";
 import type { HistoricImmunizationsData, HistoricImmunizationDose } from "../historic-immunizations-data";
@@ -87,8 +88,10 @@ export class Canid {
     }
   }
 
-  async fillPatientForm(): Promise<PatientTestData> {
-    const data = generatePatientTestData();
+  async fillPatientForm(
+    ageType: PatientAgeType = "minor",
+  ): Promise<PatientTestData> {
+    const data = generatePatientTestData(ageType);
 
     await setValue(
       '[data-automation-id="patient-basic-mrn"] > input',
@@ -106,6 +109,14 @@ export class Canid {
       '[data-automation-id="patient-basic-date-of-birth"] > input',
       data.dob,
     );
+
+    if (elementExists('[data-automation-id="patient-basic-sex"]')) {
+      await selectOptionByText(
+        '[data-automation-id="patient-basic-sex"]',
+        data.sex,
+      );
+    }
+
     await setValue(
       '[data-automation-id="patient-basic-email"] > input',
       data.email,

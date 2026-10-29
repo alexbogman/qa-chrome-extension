@@ -17,7 +17,7 @@
                 <p class="header__subtitle">Canid testing utilities</p>
             </div>
         </div>
-        <span class="badge">v3.2</span>
+        <span class="badge">v3.3</span>
     </header>
 
     <main class="main">
@@ -35,15 +35,27 @@
             </label>
         </article>
 
-        <article class="card card--action">
-            <div class="card__content">
-                <div class="card__icon card__icon--patient" aria-hidden="true">👤</div>
-                <div class="card__text">
-                    <h2 class="card__title">Fill patient form</h2>
-                    <p class="card__description">Populate the form with random test data</p>
+        <article class="card card--stack">
+            <div class="card__row">
+                <div class="card__content">
+                    <div class="card__icon card__icon--patient" aria-hidden="true">👤</div>
+                    <div class="card__text">
+                        <h2 class="card__title">Fill patient form</h2>
+                        <p class="card__description">Random test data including Sex (Male / Female / Unknown)</p>
+                    </div>
                 </div>
+                <button type="button" class="btn btn--outline" id="randomPatientDataBtn">Run</button>
             </div>
-            <button type="button" class="btn btn--outline" id="randomPatientDataBtn">Run</button>
+            <div class="segmented" role="radiogroup" aria-label="Patient age type">
+                <label class="segmented__option">
+                    <input type="radio" name="patientAgeType" value="minor" checked>
+                    <span>Minor</span>
+                </label>
+                <label class="segmented__option">
+                    <input type="radio" name="patientAgeType" value="adult">
+                    <span>Adult</span>
+                </label>
+            </div>
         </article>
 
         <section class="copy-section">
@@ -53,6 +65,37 @@
                 Copy JSON
             </button>
         </section>
+
+        <article class="card card--stack">
+            <div class="card__row">
+                <div class="card__content">
+                    <div class="card__icon card__icon--inventory" aria-hidden="true">▣</div>
+                    <div class="card__text">
+                        <h2 class="card__title">Inventory QR</h2>
+                        <p class="card__description">Load received lots and apply GS1 to Scan <code>test-value</code></p>
+                    </div>
+                </div>
+                <button type="button" class="btn btn--outline" id="fetchInventoryBtn">Load</button>
+            </div>
+            <div class="inventory-controls">
+                <input
+                    type="search"
+                    class="input"
+                    id="inventorySearch"
+                    placeholder="Filter by name, lot, NDC…"
+                    autocomplete="off"
+                    disabled
+                >
+                <select class="select" id="inventoryFundingFilter" disabled aria-label="Funding filter">
+                    <option value="all">All funding</option>
+                    <option value="private">Private</option>
+                    <option value="vfc">VFC</option>
+                    <option value="vfa">VFA</option>
+                </select>
+            </div>
+            <p class="inventory-meta" id="inventoryMeta">Open Practice Portal while signed in, then Load</p>
+            <ul class="inventory-list" id="inventoryList" hidden></ul>
+        </article>
 
         <article class="card card--action">
             <div class="card__content">

@@ -14,10 +14,15 @@ const CANID_URLS = [
 export default defineManifest({
   manifest_version: 3,
   name: 'QA Tools',
-  version: '3.2',
+  version: '3.3',
   description: 'Tools to make easy job for QA engineers',
   author: 'Canid QA Team',
   permissions: ['activeTab', 'storage', 'contextMenus'],
+  host_permissions: [
+    'http://localhost:8080/*',
+    'https://api-staging.canid.io/*',
+    'https://api.canid.io/*',
+  ],
   background: {
     service_worker: 'background.ts',
     type: 'module',

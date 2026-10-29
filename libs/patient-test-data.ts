@@ -1,5 +1,9 @@
 type Sex = "male" | "female";
 
+export type PatientAgeType = "minor" | "adult";
+
+const PATIENT_SEXES = ["Male", "Female", "Unknown"] as const;
+
 const MALE_FIRST_NAMES = [
   "James",
   "John",
@@ -304,11 +308,16 @@ function randomBirthdate(maxAgeYears: number): Date {
   return birth;
 }
 
+function randomMinorBirthdate(): Date {
+  // Under 18 — kept distinct from adult so VFC/guardian flows stay realistic
+  return randomBirthdate(17);
+}
+
 function formatDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  return `${year}/${month}/${day}`;
+  return `${month}/${day}/${year}`;
 }
 
 function randomPhone(): string {
@@ -376,24 +385,37 @@ export function generateGuardianTestData() {
 
 export type GuardianTestData = ReturnType<typeof generateGuardianTestData>;
 
-export function generatePatientTestData() {
+export function generatePatientTestData(ageType: PatientAgeType = "minor") {
   const sex = randomSex();
   const firstName = pick(
     sex === "male" ? MALE_FIRST_NAMES : FEMALE_FIRST_NAMES,
   );
   const lastName = pick(LAST_NAMES);
   const suffix = pickAddressSuffix();
+  // Prefer name-aligned Male/Female; occasionally Unknown for IIS edge cases
+  const patientSex =
+    Math.random() < 0.1
+      ? "Unknown"
+      : sex === "male"
+        ? "Male"
+        : "Female";
+  const dob =
+    ageType === "adult"
+      ? formatDate(randomAdultBirthdate(18, 65))
+      : formatDate(randomMinorBirthdate());
 
   return {
     mrn: `QAT${randomInt(1_000_000_000, 9_999_999_999)}`,
     firstName,
     lastName,
+    sex: patientSex as (typeof PATIENT_SEXES)[number],
+    ageType,
     email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
     phone: randomPhone(),
     address: `${randomInt(100, 9999)} ${pick(STREET_NAMES)}${suffix}`,
     city: pick(CITIES),
     zip: String(randomInt(10000, 99999)),
-    dob: formatDate(randomBirthdate(18)),
+    dob,
     guardian: generateGuardianTestData(),
   };
 }

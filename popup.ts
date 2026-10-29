@@ -1,11 +1,21 @@
-import type { PatientTestData } from "./libs/patient-test-data.ts";
+import type {
+  PatientAgeType,
+  PatientTestData,
+} from "./libs/patient-test-data.ts";
 import type { HistoricImmunizationsData } from "./libs/historic-immunizations-data.ts";
 import type { PageNote } from "./libs/notes.ts";
 import { getPageScope } from "./libs/page-scope.ts";
 import {
+  filterInventoryItems,
+  type InventoryFundingFilter,
+  type InventoryQrItem,
+} from "./libs/inventory-qr.ts";
+import {
   LAST_PATIENT_DATA_KEY,
   LAST_IMMUNIZATIONS_DATA_KEY,
+  LAST_INVENTORY_QR_KEY,
   PAGE_NOTES_KEY,
+  PATIENT_AGE_TYPE_KEY,
 } from "./libs/constants/storage.ts";
 
 const highlightToggle = document.getElementById(
@@ -25,6 +35,17 @@ const lastPatientPreview = document.getElementById("lastPatientPreview");
 const lastImmunizationsPreview = document.getElementById(
   "lastImmunizationsPreview",
 );
+const fetchInventoryBtn = document.getElementById(
+  "fetchInventoryBtn",
+) as HTMLButtonElement | null;
+const inventorySearch = document.getElementById(
+  "inventorySearch",
+) as HTMLInputElement | null;
+const inventoryFundingFilter = document.getElementById(
+  "inventoryFundingFilter",
+) as HTMLSelectElement | null;
+const inventoryMeta = document.getElementById("inventoryMeta");
+const inventoryList = document.getElementById("inventoryList");
 const notesCount = document.getElementById("notesCount");
 const notesList = document.getElementById("notesList");
 const copyNotesBtn = document.getElementById(
@@ -44,12 +65,15 @@ let currentPageNotes: PageNote[] = [];
 let allPageNotes: PageNote[] = [];
 let lastPatientData: PatientTestData | null = null;
 let lastImmunizationsData: HistoricImmunizationsData | null = null;
+let patientAgeType: PatientAgeType = "minor";
+let inventoryItems: InventoryQrItem[] = [];
 
 type TabResponse = {
   success: boolean;
   error?: string;
   patientData?: PatientTestData;
   immunizationsData?: HistoricImmunizationsData;
+  inventory?: InventoryQrItem[];
 };
 
 function setStatus(message: string, type: "success" | "error" | "" = "") {
@@ -106,9 +130,163 @@ function updatePatientCopySection() {
   updatePreview(
     lastPatientPreview,
     lastPatientData,
-    (data) => `${data.firstName} ${data.lastName} · ${data.mrn}`,
+    (data) => {
+      const age = data.ageType === "adult" ? "adult" : "minor";
+      return `${data.firstName} ${data.lastName} · ${data.sex} · ${age} · ${data.mrn}`;
+    },
     "No data yet — run fill patient form",
   );
+}
+
+function getSelectedAgeType(): PatientAgeType {
+  const checked = document.querySelector(
+    'input[name="patientAgeType"]:checked',
+  ) as HTMLInputElement | null;
+  return checked?.value === "adult" ? "adult" : "minor";
+}
+
+function syncAgeTypeRadios() {
+  const radios = document.querySelectorAll(
+    'input[name="patientAgeType"]',
+  ) as NodeListOf<HTMLInputElement>;
+  radios.forEach((radio) => {
+    radio.checked = radio.value === patientAgeType;
+  });
+}
+
+function fundingBadgeClass(fundingType: string): string {
+  if (fundingType === "vfc") return "inventory-item__badge inventory-item__badge--vfc";
+  if (fundingType === "vfa") return "inventory-item__badge inventory-item__badge--vfa";
+  if (fundingType === "private") {
+    return "inventory-item__badge inventory-item__badge--private";
+  }
+  return "inventory-item__badge";
+}
+
+function getInventoryFundingFilter(): InventoryFundingFilter {
+  const value = inventoryFundingFilter?.value;
+  if (value === "private" || value === "vfc" || value === "vfa") return value;
+  return "all";
+}
+
+function updateInventorySection() {
+  const hasItems = inventoryItems.length > 0;
+  if (inventorySearch) inventorySearch.disabled = !hasItems;
+  if (inventoryFundingFilter) inventoryFundingFilter.disabled = !hasItems;
+  if (!inventoryList) return;
+
+  if (!hasItems) {
+    inventoryList.hidden = true;
+    inventoryList.innerHTML = "";
+    return;
+  }
+
+  const filtered = filterInventoryItems(
+    inventoryItems,
+    inventorySearch?.value ?? "",
+    getInventoryFundingFilter(),
+  );
+
+  if (inventoryMeta) {
+    inventoryMeta.textContent = `${filtered.length} of ${inventoryItems.length} lots · click Apply on Scan`;
+  }
+
+  inventoryList.hidden = false;
+  inventoryList.innerHTML = "";
+
+  if (filtered.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "inventory-empty";
+    empty.textContent = "No lots match this filter";
+    inventoryList.appendChild(empty);
+    return;
+  }
+
+  // Keep the popup usable — show a focused slice; refine with search
+  const visible = filtered.slice(0, 40);
+  visible.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "inventory-item";
+
+    const top = document.createElement("div");
+    top.className = "inventory-item__top";
+
+    const text = document.createElement("div");
+    const name = document.createElement("p");
+    name.className = "inventory-item__name";
+    name.textContent = item.name;
+
+    const meta = document.createElement("p");
+    meta.className = "inventory-item__meta";
+    meta.textContent = `Lot ${item.lot} · Exp ${item.expiration} · ${item.doses} dose${item.doses === 1 ? "" : "s"} · ${item.saleNdc}`;
+
+    text.append(name, meta);
+
+    const badge = document.createElement("span");
+    badge.className = fundingBadgeClass(item.fundingType);
+    badge.textContent = item.fundingType;
+
+    top.append(text, badge);
+
+    const actions = document.createElement("div");
+    actions.className = "inventory-item__actions";
+
+    const applyBtn = document.createElement("button");
+    applyBtn.type = "button";
+    applyBtn.className = "btn btn--outline";
+    applyBtn.textContent = "Apply to Scan";
+    applyBtn.addEventListener("click", () => applyInventoryQr(item, applyBtn));
+
+    const copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "btn btn--outline";
+    copyBtn.textContent = "Copy QR";
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(item.qrCode);
+        const original = copyBtn.textContent;
+        copyBtn.textContent = "Copied!";
+        setStatus("QR code copied", "success");
+        setTimeout(() => {
+          copyBtn.textContent = original;
+        }, 1200);
+      } catch {
+        setStatus("Could not copy QR code", "error");
+      }
+    });
+
+    actions.append(applyBtn, copyBtn);
+    li.append(top, actions);
+    inventoryList.appendChild(li);
+  });
+
+  if (filtered.length > visible.length) {
+    const more = document.createElement("li");
+    more.className = "inventory-empty";
+    more.textContent = `Showing ${visible.length} of ${filtered.length} — refine search to narrow`;
+    inventoryList.appendChild(more);
+  }
+}
+
+async function applyInventoryQr(item: InventoryQrItem, button: HTMLButtonElement) {
+  const original = button.textContent;
+  button.disabled = true;
+  button.textContent = "Applying…";
+  setStatus("");
+
+  const result = await sendToActiveTab({
+    action: "applyInventoryQr",
+    qrCode: item.qrCode,
+  });
+
+  button.disabled = false;
+  button.textContent = original;
+
+  if (result.success) {
+    setStatus(`Applied ${item.name} · ${item.lot}`, "success");
+  } else {
+    setStatus(result.error ?? "Could not apply QR to Scan", "error");
+  }
 }
 
 function updateImmunizationsCopySection() {
@@ -286,12 +464,22 @@ function loadNotesForCurrentTab() {
 
 function loadStoredData() {
   chrome.storage.local.get(
-    [LAST_PATIENT_DATA_KEY, LAST_IMMUNIZATIONS_DATA_KEY],
+    [
+      LAST_PATIENT_DATA_KEY,
+      LAST_IMMUNIZATIONS_DATA_KEY,
+      LAST_INVENTORY_QR_KEY,
+      PATIENT_AGE_TYPE_KEY,
+    ],
     (result) => {
       lastPatientData = result[LAST_PATIENT_DATA_KEY] ?? null;
       lastImmunizationsData = result[LAST_IMMUNIZATIONS_DATA_KEY] ?? null;
+      inventoryItems = (result[LAST_INVENTORY_QR_KEY] as InventoryQrItem[] | undefined) ?? [];
+      patientAgeType =
+        result[PATIENT_AGE_TYPE_KEY] === "adult" ? "adult" : "minor";
+      syncAgeTypeRadios();
       updatePatientCopySection();
       updateImmunizationsCopySection();
+      updateInventorySection();
     },
   );
 }
@@ -357,6 +545,7 @@ async function runAction(
   action: string,
   runningLabel: string,
   successLabel: string,
+  payload: Record<string, unknown> = {},
 ) {
   if (!button) return;
 
@@ -365,7 +554,7 @@ async function runAction(
   button.textContent = runningLabel;
   setStatus("");
 
-  const result = await sendToActiveTab({ action });
+  const result = await sendToActiveTab({ action, ...payload });
 
   button.removeAttribute("disabled");
   button.textContent = originalText;
@@ -383,21 +572,65 @@ async function runAction(
       });
       updateImmunizationsCopySection();
     }
+    if (action === "fetchInventoryQr" && result.inventory) {
+      inventoryItems = result.inventory;
+      chrome.storage.local.set({ [LAST_INVENTORY_QR_KEY]: result.inventory });
+      updateInventorySection();
+      setStatus(
+        result.inventory.length === 0
+          ? "No received lots with doses found"
+          : `Loaded ${result.inventory.length} scannable lots`,
+        "success",
+      );
+      return;
+    }
     setStatus(successLabel, "success");
   } else {
     setStatus(result.error ?? "Action failed", "error");
   }
 }
 
+document.querySelectorAll('input[name="patientAgeType"]').forEach((el) => {
+  el.addEventListener("change", () => {
+    patientAgeType = getSelectedAgeType();
+    chrome.storage.local.set({ [PATIENT_AGE_TYPE_KEY]: patientAgeType });
+  });
+});
+
 if (randomPatientDataBtn) {
   randomPatientDataBtn.addEventListener("click", () => {
+    patientAgeType = getSelectedAgeType();
     runAction(
       randomPatientDataBtn,
       "randomPatientData",
       "Running…",
-      "Patient form filled",
+      patientAgeType === "adult"
+        ? "Adult patient form filled"
+        : "Minor patient form filled",
+      { ageType: patientAgeType },
     );
   });
+}
+
+if (fetchInventoryBtn) {
+  fetchInventoryBtn.addEventListener("click", () => {
+    runAction(
+      fetchInventoryBtn,
+      "fetchInventoryQr",
+      "Loading…",
+      "Inventory loaded",
+    );
+  });
+}
+
+if (inventorySearch) {
+  inventorySearch.addEventListener("input", () => updateInventorySection());
+}
+
+if (inventoryFundingFilter) {
+  inventoryFundingFilter.addEventListener("change", () =>
+    updateInventorySection(),
+  );
 }
 
 if (addHistoricImmunizationsBtn) {
