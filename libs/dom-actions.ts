@@ -104,6 +104,107 @@ export async function setReactInputValue(
   }
 }
 
+const VACCINE_PICKER_SEARCH_PLACEHOLDER = "Type at least 2 characters…";
+
+function normalizeText(text: string | null | undefined): string {
+  return text?.replace(/\s+/g, " ").trim() ?? "";
+}
+
+/**
+ * shadcn VaccinePicker (bluefox packages/ui/VaccinePicker.tsx -> Combobox).
+ * Trigger is a `button[role=combobox]` inside the picker; the menu is portaled
+ * to <body> with its own search input. Options are `button[role=option]`
+ * rendering the vaccine name in the first <span> and its types as badges.
+ * Prefers the generic vaccine whose name and type both equal `value`
+ * (same rule as the old Semantic UI picker), falling back to name match.
+ */
+export async function selectVaccinePickerValue(
+  pickerSelector: string,
+  value: string,
+) {
+  try {
+    const picker = document.querySelector(pickerSelector);
+    const trigger = picker?.querySelector<HTMLButtonElement>(
+      'button[role="combobox"]',
+    );
+    if (!trigger) {
+      console.warn(`Vaccine picker trigger not found: ${pickerSelector}`);
+      return false;
+    }
+
+    const findMenu = () =>
+      Array.from(
+        document.querySelectorAll<HTMLElement>('[role="listbox"]'),
+      ).find((menu) =>
+        menu.querySelector(
+          `input[placeholder="${VACCINE_PICKER_SEARCH_PLACEHOLDER}"]`,
+        ),
+      );
+
+    if (!findMenu()) trigger.click();
+
+    let menu: HTMLElement | undefined;
+    for (let tries = 0; tries < 20 && !menu; tries++) {
+      menu = findMenu();
+      if (!menu) await delay(100);
+    }
+    if (!menu) {
+      console.warn("Vaccine picker menu did not open");
+      return false;
+    }
+
+    const search = menu.querySelector<HTMLInputElement>(
+      `input[placeholder="${VACCINE_PICKER_SEARCH_PLACEHOLDER}"]`,
+    )!;
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )?.set;
+    search.focus();
+    if (nativeSetter) nativeSetter.call(search, value);
+    else search.value = value;
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+
+    let match: HTMLButtonElement | undefined;
+    for (let tries = 0; tries < 30 && !match; tries++) {
+      const options = Array.from(
+        (findMenu() ?? menu).querySelectorAll<HTMLButtonElement>(
+          'button[role="option"]:not([disabled])',
+        ),
+      );
+      // Option markup: button > svg + span > Stack > (row > span name),
+      // span meta, Toolbar > Badge(type)... — read leaf texts in order.
+      const leafTexts = (opt: HTMLElement) =>
+        Array.from(opt.querySelectorAll<HTMLElement>("*"))
+          .filter((el) => el.children.length === 0 && el.tagName !== "svg")
+          .map((el) => normalizeText(el.textContent))
+          .filter(Boolean);
+      const parsed = options.map((opt) => {
+        const [name, ...rest] = leafTexts(opt);
+        return { opt, name, rest };
+      });
+      match =
+        parsed.find((o) => o.name === value && o.rest.includes(value))?.opt ??
+        parsed.find((o) => o.name === value)?.opt ??
+        parsed.find((o) => o.rest.includes(value))?.opt;
+      if (!match) await delay(200);
+    }
+
+    if (!match) {
+      console.warn(`Vaccine picker option not found for value: ${value}`);
+      trigger.click();
+      return false;
+    }
+
+    match.click();
+    await delay(200);
+    return true;
+  } catch (err) {
+    console.error(`Error selecting vaccine "${value}"`, err);
+    return false;
+  }
+}
+
 export async function selectDropdownValue(selector: string, value: string) {
   try {
     const input: HTMLInputElement | null = document.querySelector(selector);

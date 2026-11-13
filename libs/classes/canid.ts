@@ -1,7 +1,7 @@
 import { addMonths, format, parse } from "date-fns";
 import {
   elementExists,
-  selectDropdownValue,
+  selectVaccinePickerValue,
   selectOptionByText,
   setValue,
   simulateTyping,
@@ -275,10 +275,11 @@ export class Canid {
     _doseKey: string,
     date: string,
   ) {
-    await selectDropdownValue(
-      '[data-automation-id="vaccine-picker"] > input',
+    const picked = await selectVaccinePickerValue(
+      '[data-automation-id="vaccine-picker"]',
       vaccineType,
     );
+    if (!picked) return;
     await setValue(
       '[data-automation-id="historical-imm-date-given"] input',
       date,
@@ -291,7 +292,7 @@ export class Canid {
     );
 
     const saveBtn: HTMLButtonElement | null = document.querySelector(
-      'form > button[type="submit"]',
+      '[data-automation-id="historical-imm-add-button"]',
     );
 
     saveBtn?.click();
